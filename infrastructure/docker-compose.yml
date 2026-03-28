@@ -12,6 +12,11 @@ services:
       - leadbridge-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d leadbridge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   keycloak:
     image: quay.io/keycloak/keycloak:23.0.7
@@ -29,7 +34,98 @@ services:
     ports:
       - "8180:8080"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  discovery-server:
+    build:
+      context: ../backend/leadbridge-discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - leadbridge-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  gateway:
+    build:
+      context: ../backend/leadbridge-gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+
+  tenant-service:
+    build:
+      context: ../backend/leadbridge-tenant-service
+    container_name: tenant-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+
+  lead-service:
+    build:
+      context: ../backend/leadbridge-lead-service
+    container_name: lead-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+
+  email-service:
+    build:
+      context: ../backend/leadbridge-email-service
+    container_name: email-service
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+
+  report-service:
+    build:
+      context: ../backend/leadbridge-report-service
+    container_name: report-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    networks:
+      - leadbridge-network
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: leadbridge-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - gateway
     networks:
       - leadbridge-network
 

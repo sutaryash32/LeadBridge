@@ -41,12 +41,12 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/leadbridge}
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8080/realms/leadbridge}
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_URI:http://discovery-server:8761/eureka/}
   instance:
     prefer-ip-address: true
 

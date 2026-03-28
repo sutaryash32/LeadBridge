@@ -5,7 +5,7 @@ spring:
   application:
     name: leadbridge-report-service
   datasource:
-    url: jdbc:postgresql://localhost:5439/leadbridge?TimeZone=Asia/Kolkata
+    url: jdbc:postgresql://postgres:5432/leadbridge?TimeZone=Asia/Kolkata
     username: postgres
     password: root
     driver-class-name: org.postgresql.Driver
@@ -21,12 +21,12 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/leadbridge
+          issuer-uri: http://keycloak:8080/realms/leadbridge
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://discovery-server:8761/eureka/
   instance:
     prefer-ip-address: true
 
