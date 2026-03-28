@@ -26,6 +26,8 @@ spring:
     enabled: true
     validate-on-migrate: false
     baseline-on-migrate: true
+    baseline-version: 0
+    table: flyway_schema_history_tenant
     out-of-order: true
 
 eureka:
