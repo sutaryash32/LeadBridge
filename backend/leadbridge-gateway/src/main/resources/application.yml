@@ -22,26 +22,33 @@ spring:
             allowedHeaders: "*"
       routes:
         - id: tenant-service
-          uri: http://tenant-service:8081
+          uri: lb://leadbridge-tenant-service
           predicates:
             - Path=/api/tenants/**
         - id: lead-service
-          uri: http://lead-service:8082
+          uri: lb://leadbridge-lead-service
           predicates:
             - Path=/api/leads/**
         - id: email-service
-          uri: http://email-service:8083
+          uri: lb://leadbridge-email-service
           predicates:
             - Path=/api/emails/**
         - id: report-service
-          uri: http://report-service:8084
+          uri: lb://leadbridge-report-service
           predicates:
             - Path=/api/reports/**
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak:8180/realms/leadbridge
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/leadbridge}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
 
 management:
   endpoints:

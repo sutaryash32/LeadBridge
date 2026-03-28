@@ -85,9 +85,18 @@ public class LeadService {
     @Transactional
     public void deleteLead(UUID id) {
         String tenantId = validateTenantId();
-        Lead existingLead = leadRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new RuntimeException("ResourceNotFoundException"));
-        leadRepository.delete(existingLead);
+        Lead lead = leadRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new RuntimeException("Lead not found"));
+        leadRepository.delete(lead);
+    }
+
+    public java.util.Map<LeadStatus, Long> getLeadStats(String tenantId) {
+        String effectiveTenantId = (tenantId != null && !tenantId.isEmpty()) ? tenantId : validateTenantId();
+        return java.util.Arrays.stream(LeadStatus.values())
+                .collect(java.util.stream.Collectors.toMap(
+                        status -> status,
+                        status -> leadRepository.countByTenantIdAndStatus(effectiveTenantId, status)
+                ));
     }
 
     private String validateTenantId() {

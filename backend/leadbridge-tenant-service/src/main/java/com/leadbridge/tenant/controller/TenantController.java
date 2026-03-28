@@ -1,8 +1,8 @@
 package com.leadbridge.tenant.controller;
 
 import com.leadbridge.common.dto.ApiResponse;
+import com.leadbridge.common.dto.TenantResponseDto;
 import com.leadbridge.tenant.dto.TenantRequestDto;
-import com.leadbridge.tenant.dto.TenantResponseDto;
 import com.leadbridge.tenant.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +39,12 @@ public class TenantController {
     @PreAuthorize("hasRole('MASTER_MSSP')")
     public ResponseEntity<ApiResponse<TenantResponseDto>> createTenant(@RequestBody TenantRequestDto requestDto) {
         return ResponseEntity.ok(ApiResponse.success(tenantService.createTenant(requestDto), "Tenant created successfully"));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MSSP') or hasRole('ENTERPRISE_TENANT')")
+    public ResponseEntity<ApiResponse<TenantResponseDto>> getTenantById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(tenantService.getTenantById(id), "Fetched tenant successfully"));
     }
 
     @DeleteMapping("/{id}")

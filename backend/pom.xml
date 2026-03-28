@@ -25,6 +25,7 @@
         <module>leadbridge-lead-service</module>
         <module>leadbridge-email-service</module>
         <module>leadbridge-report-service</module>
+        <module>leadbridge-discovery-server</module>
     </modules>
 
     <properties>

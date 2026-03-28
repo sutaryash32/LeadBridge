@@ -1,7 +1,7 @@
 package com.leadbridge.tenant.service;
 
+import com.leadbridge.common.dto.TenantResponseDto;
 import com.leadbridge.tenant.dto.TenantRequestDto;
-import com.leadbridge.tenant.dto.TenantResponseDto;
 import com.leadbridge.tenant.entity.Tenant;
 import com.leadbridge.tenant.mapper.TenantMapper;
 import com.leadbridge.tenant.repository.TenantRepository;
@@ -50,5 +50,11 @@ public class TenantService {
     @Transactional
     public void deleteTenant(UUID id) {
         tenantRepository.deleteById(id);
+    }
+
+    public TenantResponseDto getTenantById(UUID id) {
+        return tenantRepository.findById(id)
+                .map(tenantMapper::toDto)
+                .orElseThrow(() -> new RuntimeException("Tenant not found"));
     }
 }

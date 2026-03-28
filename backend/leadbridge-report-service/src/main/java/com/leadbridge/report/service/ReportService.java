@@ -1,17 +1,14 @@
 package com.leadbridge.report.service;
 
 import com.leadbridge.common.enums.LeadStatus;
-import com.leadbridge.common.enums.TenantRole;
+import com.leadbridge.common.dto.TenantResponseDto;
+import com.leadbridge.report.client.LeadServiceClient;
+import com.leadbridge.report.client.TenantServiceClient;
 import com.leadbridge.report.dto.TenantReportDto;
-import com.leadbridge.report.entity.LeadSummary;
-import com.leadbridge.report.entity.TenantSummary;
-import com.leadbridge.report.repository.LeadSummaryRepository;
-import com.leadbridge.report.repository.TenantSummaryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,53 +18,44 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReportService {
 
-    private final LeadSummaryRepository leadSummaryRepository;
-    private final TenantSummaryRepository tenantSummaryRepository;
+    private final LeadServiceClient leadServiceClient;
+    private final TenantServiceClient tenantServiceClient;
 
     public TenantReportDto getTenantReport(String tenantId) {
-        log.info("Generating report for tenant: {}", tenantId);
+        log.info("Generating API-based report for tenant: {}", tenantId);
 
-        TenantSummary tenant = tenantSummaryRepository.findById(java.util.UUID.fromString(tenantId))
-                .orElseThrow(() -> new RuntimeException("Tenant not found: " + tenantId));
+        TenantResponseDto tenant = tenantServiceClient.getTenantById(java.util.UUID.fromString(tenantId)).getData();
+        Map<LeadStatus, Long> byStatus = leadServiceClient.getLeadStats(tenantId).getData();
 
-        List<LeadSummary> leads = leadSummaryRepository.findAllByTenantId(tenantId);
-        long total = leads.size();
-
-        Map<LeadStatus, Long> byStatus = Arrays.stream(LeadStatus.values())
-                .collect(Collectors.toMap(
-                        s -> s,
-                        s -> leads.stream().filter(l -> l.getStatus() == s).count()
-                ));
-
+        long totalCount = byStatus.values().stream().mapToLong(Long::longValue).sum();
         long converted = byStatus.getOrDefault(LeadStatus.CONVERTED, 0L);
-        double conversionRate = total > 0
-                ? Math.round((converted * 100.0 / total) * 10.0) / 10.0
+
+        double conversionRate = totalCount > 0
+                ? Math.round((converted * 100.0 / totalCount) * 10.0) / 10.0
                 : 0.0;
 
         return TenantReportDto.builder()
                 .tenantId(tenantId)
                 .areaName(tenant.getArea())
-                .totalLeads(total)
+                .totalLeads(totalCount)
                 .byStatus(byStatus)
                 .conversionRate(conversionRate)
                 .build();
     }
 
     public List<TenantReportDto> getMsspReport(String msspId) {
-        log.info("Generating report for MSSP: {}", msspId);
+        log.info("Generating API-based report for MSSP via Feign: {}", msspId);
 
-        return tenantSummaryRepository
-                .findAllByMsspIdAndTenantRole(msspId, TenantRole.ENTERPRISE_TENANT)
+        return tenantServiceClient.getMyTenants().getData()
                 .stream()
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());
     }
 
     public List<TenantReportDto> getGlobalReport() {
-        log.info("Generating global report");
+        log.info("Generating global API-based report via Feign");
 
-        return tenantSummaryRepository
-                .findAllByTenantRole(TenantRole.ENTERPRISE_TENANT)
+        return tenantServiceClient.getAllTenants().getData()
                 .stream()
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());

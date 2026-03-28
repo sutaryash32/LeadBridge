@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-03-28T16:18:53+0530",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260224-0835, environment: Java 21.0.10 (Oracle Corporation)"
+    date = "2026-03-28T21:46:58+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Oracle Corporation)"
 )
 @Component
 public class LeadMapperImpl implements LeadMapper {
@@ -22,11 +22,11 @@ public class LeadMapperImpl implements LeadMapper {
 
         Lead.LeadBuilder lead = Lead.builder();
 
-        lead.email( dto.getEmail() );
         lead.name( dto.getName() );
-        lead.notes( dto.getNotes() );
+        lead.email( dto.getEmail() );
         lead.phone( dto.getPhone() );
         lead.status( dto.getStatus() );
+        lead.notes( dto.getNotes() );
 
         return lead.build();
     }
@@ -39,14 +39,14 @@ public class LeadMapperImpl implements LeadMapper {
 
         LeadResponseDto leadResponseDto = new LeadResponseDto();
 
-        leadResponseDto.setCreatedAt( entity.getCreatedAt() );
-        leadResponseDto.setEmail( entity.getEmail() );
         leadResponseDto.setId( entity.getId() );
         leadResponseDto.setName( entity.getName() );
-        leadResponseDto.setNotes( entity.getNotes() );
+        leadResponseDto.setEmail( entity.getEmail() );
         leadResponseDto.setPhone( entity.getPhone() );
         leadResponseDto.setStatus( entity.getStatus() );
+        leadResponseDto.setNotes( entity.getNotes() );
         leadResponseDto.setTenantId( entity.getTenantId() );
+        leadResponseDto.setCreatedAt( entity.getCreatedAt() );
         leadResponseDto.setUpdatedAt( entity.getUpdatedAt() );
 
         return leadResponseDto;

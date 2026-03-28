@@ -47,6 +47,12 @@ public class LeadController {
         return ResponseEntity.ok(ApiResponse.success(leadService.patchStatus(id, status), "Lead status updated successfully"));
     }
 
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<java.util.Map<LeadStatus, Long>>> getLeadStats(
+            @RequestParam(required = false) String tenantId) {
+        return ResponseEntity.ok(ApiResponse.success(leadService.getLeadStats(tenantId), "Fetched lead statistics successfully"));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteLead(@PathVariable UUID id) {
         leadService.deleteLead(id);
