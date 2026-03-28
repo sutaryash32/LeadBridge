@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: tenant-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/tenants/**
+        - id: lead-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/leads/**
+        - id: email-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/emails/**
+        - id: report-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/reports/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/leadbridge

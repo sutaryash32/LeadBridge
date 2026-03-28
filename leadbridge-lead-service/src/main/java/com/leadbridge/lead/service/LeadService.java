@@ -60,7 +60,7 @@ public class LeadService {
 
         existingLead.setName(requestDto.getName());
         existingLead.setEmail(requestDto.getEmail());
-        existingLead.setPhone(requestDto.Phone());
+        existingLead.setPhone(requestDto.getPhone());
         existingLead.setStatus(requestDto.getStatus());
         existingLead.setNotes(requestDto.getNotes());
         existingLead.setUpdatedAt(LocalDateTime.now());

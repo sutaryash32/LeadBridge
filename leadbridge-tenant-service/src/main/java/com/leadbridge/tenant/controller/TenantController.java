@@ -7,6 +7,8 @@ import com.leadbridge.tenant.service.TenantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,9 @@ public class TenantController {
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('MSSP')")
-    public ResponseEntity<ApiResponse<List<TenantResponseDto>>> getMyTenants(@RequestParam String msspId) {
-        // Technically msspId should be read from JWT, but this is an example based on specifications
+    public ResponseEntity<ApiResponse<List<TenantResponseDto>>> getMyTenants(
+            @AuthenticationPrincipal Jwt jwt) {
+        String msspId = jwt.getClaimAsString("tenantId");
         return ResponseEntity.ok(ApiResponse.success(tenantService.getMyTenants(msspId), "Fetched my tenants"));
     }
 
