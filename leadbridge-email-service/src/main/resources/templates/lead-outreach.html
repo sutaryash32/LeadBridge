@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lead Outreach</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; max-width: 600px; margin: auto;">
+        <h2 style="color: #333333;">Hello, <span th:text="${leadName}">Lead</span>!</h2>
+        <p style="color: #666666;">
+            We noticed you're interested in our services. Let's schedule a call to discuss how LeadBridge can help you achieve your goals.
+        </p>
+        <p style="color: #666666;">
+            <span th:text="${customMessage}">Looking forward to hearing from you.</span>
+        </p>
+        <div style="margin-top: 30px;">
+            <p style="color: #666666; font-size: 12px;">Best Regards,<br>The LeadBridge Team</p>
+        </div>
+    </div>
+</body>
+</html>

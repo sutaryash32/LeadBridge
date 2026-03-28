@@ -1,0 +1,51 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: leadbridge-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        - id: tenant-service
+          uri: http://tenant-service:8081
+          predicates:
+            - Path=/api/tenants/**
+        - id: lead-service
+          uri: http://lead-service:8082
+          predicates:
+            - Path=/api/leads/**
+        - id: email-service
+          uri: http://email-service:8083
+          predicates:
+            - Path=/api/emails/**
+        - id: report-service
+          uri: http://report-service:8084
+          predicates:
+            - Path=/api/reports/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8180/realms/leadbridge
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always

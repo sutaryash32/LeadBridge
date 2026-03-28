@@ -1,0 +1,51 @@
+{
+    "realm": "leadbridge",
+    "enabled": true,
+    "clients": [
+      {
+        "clientId": "leadbridge-frontend",
+        "enabled": true,
+        "publicClient": true,
+        "directAccessGrantsEnabled": true,
+        "standardFlowEnabled": true,
+        "redirectUris": [
+          "http://localhost:4200/*"
+        ],
+        "webOrigins": [
+          "http://localhost:4200"
+        ]
+      }
+    ],
+    "roles": {
+      "realm": [
+        {
+          "name": "MASTER_MSSP",
+          "description": "Master super admin"
+        },
+        {
+          "name": "MSSP",
+          "description": "Zone Manager"
+        },
+        {
+          "name": "ENTERPRISE_TENANT",
+          "description": "Area Manager"
+        }
+      ]
+    },
+    "users": [
+      {
+        "username": "master",
+        "enabled": true,
+        "credentials": [
+          {
+            "type": "password",
+            "value": "master",
+            "temporary": false
+          }
+        ],
+        "realmRoles": [
+          "MASTER_MSSP"
+        ]
+      }
+    ]
+  }

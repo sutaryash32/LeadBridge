@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-leadbridge}
+    ports:
+      - "5432:5432"
+    networks:
+      - leadbridge-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.7
+    container_name: keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-leadbridge}
+      KC_DB_USERNAME: ${DB_USERNAME:-postgres}
+      KC_DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
+    ports:
+      - "8180:8080"
+    depends_on:
+      - postgres
+    networks:
+      - leadbridge-network
+
+  # Note: To run microservices in Docker, you'll need to build their images first.
+  # Otherwise, you can just run postgres and keycloak using this compose file,
+  # and run the microservices locally via Maven/IDE for development.
+
+networks:
+  leadbridge-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

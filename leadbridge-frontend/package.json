@@ -1,0 +1,7 @@
+{
+  "name": "leadbridge-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "@angular/cli": "19.2.0"
+  }
+}
