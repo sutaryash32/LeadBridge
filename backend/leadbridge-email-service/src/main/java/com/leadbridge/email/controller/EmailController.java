@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/emails")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ENTERPRISE_TENANT') or hasRole('MSSP')")
+@PreAuthorize("hasRole('ENTERPRISE_TENANT') or hasRole('MSSP') or hasRole('MASTER_MSSP')")
 public class EmailController {
 
     private final EmailService emailService;

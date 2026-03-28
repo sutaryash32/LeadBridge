@@ -42,7 +42,7 @@ public class TenantController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('MSSP') or hasRole('ENTERPRISE_TENANT')")
+    @PreAuthorize("hasRole('MSSP') or hasRole('ENTERPRISE_TENANT') or hasRole('MASTER_MSSP')")
     public ResponseEntity<ApiResponse<TenantResponseDto>> getTenantById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(tenantService.getTenantById(id), "Fetched tenant successfully"));
     }

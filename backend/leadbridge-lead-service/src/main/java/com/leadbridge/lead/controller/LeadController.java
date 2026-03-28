@@ -17,7 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/leads")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ENTERPRISE_TENANT') or hasRole('MSSP')")
+@PreAuthorize("hasRole('ENTERPRISE_TENANT') or hasRole('MSSP') or hasRole('MASTER_MSSP')")
 public class LeadController {
 
     private final LeadService leadService;

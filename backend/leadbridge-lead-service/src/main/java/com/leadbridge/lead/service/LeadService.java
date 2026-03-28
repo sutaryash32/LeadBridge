@@ -8,14 +8,18 @@ import com.leadbridge.lead.entity.Lead;
 import com.leadbridge.lead.mapper.LeadMapper;
 import com.leadbridge.lead.repository.LeadRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LeadService {
@@ -90,13 +94,21 @@ public class LeadService {
         leadRepository.delete(lead);
     }
 
-    public java.util.Map<LeadStatus, Long> getLeadStats(String tenantId) {
-        String effectiveTenantId = (tenantId != null && !tenantId.isEmpty()) ? tenantId : validateTenantId();
-        return java.util.Arrays.stream(LeadStatus.values())
-                .collect(java.util.stream.Collectors.toMap(
-                        status -> status,
-                        status -> leadRepository.countByTenantIdAndStatus(effectiveTenantId, status)
-                ));
+    public Map<LeadStatus, Long> getLeadStats(String tenantId) {
+        try {
+            String effectiveTenantId = (tenantId != null && !tenantId.isEmpty()) ? tenantId : validateTenantId();
+            log.info("Fetching lead statistics for tenant: {}", effectiveTenantId);
+            
+            Map<LeadStatus, Long> statsMap = new HashMap<>();
+            for (LeadStatus status : LeadStatus.values()) {
+                long count = leadRepository.countByTenantIdAndStatus(effectiveTenantId, status);
+                statsMap.put(status, count);
+            }
+            return statsMap;
+        } catch (Exception e) {
+            log.error("Error generating lead statistics for tenant {}: {}", tenantId, e.getMessage(), e);
+            throw new RuntimeException("Failed to generate lead statistics: " + e.getMessage());
+        }
     }
 
     private String validateTenantId() {
