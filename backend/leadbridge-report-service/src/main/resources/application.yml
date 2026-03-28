@@ -5,9 +5,9 @@ spring:
   application:
     name: leadbridge-report-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5439}/${DB_NAME:leadbridge}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:root}
+    url: jdbc:postgresql://localhost:5439/leadbridge?TimeZone=Asia/Kolkata
+    username: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -16,16 +16,17 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/leadbridge}
+          issuer-uri: http://localhost:8180/realms/leadbridge
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+      defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
 
