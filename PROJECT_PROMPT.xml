@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <metadata>
+    <name>LeadBridge</name>
+    <version>0.0.1-SNAPSHOT</version>
+    <type>Microservices Platform</type>
+    <description>
+      LeadBridge is a multi-tenant, role-scoped lead management platform designed for 
+      managing leads across multiple zones, areas, and enterprise tenants. It implements 
+      a three-tier hierarchical access control model with JWT-based authentication via Keycloak.
+    </description>
+  </metadata>
+
+  <purpose>
+    <objectives>
+      <objective>Centralize lead management across multiple geographic zones and areas</objective>
+      <objective>Enforce role-based data visibility and access control</objective>
+      <objective>Provide zone managers and area managers independent dashboards scoped to their jurisdiction</objective>
+      <objective>Enable master admin to view and manage all leads, zones, and areas globally</objective>
+      <objective>Generate role-specific reports (global, zone-wide, area-specific)</objective>
+      <objective>Send notifications and emails via dedicated email service</objective>
+    </objectives>
+  </purpose>
+
+  <architecture>
+    <type>Microservices with API Gateway</type>
+    <components>
+      <service>
+        <name>Discovery Server (eureka-server)</name>
+        <port>8761</port>
+        <purpose>Service registry and discovery for dynamic service lookup</purpose>
+      </service>
+      <service>
+        <name>API Gateway</name>
+        <folder>leadbridge-gateway</folder>
+        <port>8080</port>
+        <purpose>Single entry point for all client requests; routes to backend services</purpose>
+      </service>
+      <service>
+        <name>Lead Service</name>
+        <folder>leadbridge-lead-service</folder>
+        <port>8081</port>
+        <purpose>Core CRUD operations for leads with role-aware query filtering</purpose>
+        <endpoints>
+          <endpoint method="GET" path="/api/leads">List leads scoped by role/tenant</endpoint>
+          <endpoint method="POST" path="/api/leads">Create new lead (ENTERPRISE_TENANT only)</endpoint>
+          <endpoint method="GET" path="/api/leads/:id">Get lead details (with access validation)</endpoint>
+          <endpoint method="PATCH" path="/api/leads/:id/status">Update lead status</endpoint>
+          <endpoint method="DELETE" path="/api/leads/:id">Delete lead</endpoint>
+        </endpoints>
+      </service>
+      <service>
+        <name>Tenant Service</name>
+        <folder>leadbridge-tenant-service</folder>
+        <port>8082</port>
+        <purpose>Manage zones and areas (tenants); role-based visibility</purpose>
+        <endpoints>
+          <endpoint method="GET" path="/api/tenants/my">Get areas under user's zone (MSSP)</endpoint>
+          <endpoint method="GET" path="/api/tenants/all">Get all zones and areas (MASTER_MSSP)</endpoint>
+          <endpoint method="POST" path="/api/tenants/create">Create new zone/area (MASTER_MSSP)</endpoint>
+        </endpoints>
+      </service>
+      <service>
+        <name>Report Service</name>
+        <folder>leadbridge-report-service</folder>
+        <port>8083</port>
+        <purpose>Generate role-scoped analytics and reports</purpose>
+        <endpoints>
+          <endpoint method="GET" path="/api/reports/my">Area-level report (ENTERPRISE_TENANT)</endpoint>
+          <endpoint method="GET" path="/api/reports/mssp">Zone-level aggregated report (MSSP)</endpoint>
+          <endpoint method="GET" path="/api/reports/global">Global report across all zones (MASTER_MSSP)</endpoint>
+        </endpoints>
+      </service>
+      <service>
+        <name>Email Service</name>
+        <folder>leadbridge-email-service</folder>
+        <port>8084</port>
+        <purpose>Async email and notification service</purpose>
+      </service>
+      <service>
+        <name>Common Library</name>
+        <folder>leadbridge-common</folder>
+        <purpose>Shared utilities, exceptions, context, and DTOs used by all services</purpose>
+        <key_components>
+          <component>TenantContext - ThreadLocal storage for role, tenantId, msspId</component>
+          <component>AppException - Base exception class for consistent error handling</component>
+          <component>LeadStatus enum - Lead lifecycle states</component>
+          <component>TenantRole enum - Three-tier role hierarchy</component>
+        </key_components>
+      </service>
+      <external>
+        <service>Keycloak</service>
+        <purpose>Identity provider and OAuth2/OIDC server for authentication</purpose>
+        <port>8180</port>
+        <realm>leadbridge</realm>
+        <clients>
+          <client>leadbridge-frontend (public, browser-based)</client>
+        </clients>
+      </external>
+      <external>
+        <service>PostgreSQL Database</service>
+        <purpose>Persistent data store for leads, tenants, users</purpose>
+        <port>5432</port>
+        <database>leadbridge_db</database>
+      </external>
+      <frontend>
+        <framework>Angular 19+</framework>
+        <port>4200</port>
+        <purpose>SPA for user interaction, role-scoped dashboard routing</purpose>
+      </frontend>
+    </components>
+  </architecture>
+
+  <accessControl>
+    <model>Role-Based Access Control (RBAC) with JWT Claims</model>
+    <hierarchy>
+      <role>
+        <name>MASTER_MSSP</name>
+        <level>1 (Global)</level>
+        <access>
+          <data>All leads across all zones and areas</data>
+          <data>All zones and areas</data>
+          <operations>Create/Read/Update/Delete leads, zones, and areas globally</operations>
+          <dashboard>/dashboard/master - Global view with all zones and areas</dashboard>
+        </access>
+        <seed_users>
+          <user>master / master123</user>
+        </seed_users>
+      </role>
+      <role>
+        <name>MSSP (Zone Manager)</name>
+        <level>2 (Zone/Regional)</level>
+        <access>
+          <data>All leads in areas under their zone</data>
+          <data>All areas under their zone</data>
+          <operations>Read leads in zone, view zone report, cannot create/delete</operations>
+          <dashboard>/dashboard/zone - Zone-scoped view with area breakdowns</dashboard>
+        </access>
+        <seed_users>
+          <user>hyd-zone / hyd123 - Manages Hyderabad zone (Abids, Attapur areas)</user>
+          <user>sec-zone / sec123 - Manages Secunderabad zone (Ameerpet, Secunderabad areas)</user>
+        </seed_users>
+      </role>
+      <role>
+        <name>ENTERPRISE_TENANT (Area Manager)</name>
+        <level>3 (Area/Local)</level>
+        <access>
+          <data>Leads only in their assigned area</data>
+          <operations>Create/Read/Update/Delete leads within area; cannot delete</operations>
+          <dashboard>/dashboard/area - Area-scoped view with lead management forms</dashboard>
+        </access>
+        <seed_users>
+          <user>abids-area / abids123 - Abids area under Hyderabad zone</user>
+          <user>attapur-area / attapur123 - Attapur area under Hyderabad zone</user>
+          <user>ameerpet-area / ameerpet123 - Ameerpet area under Secunderabad zone</user>
+          <user>secunderabad-area / secarea123 - Secunderabad area under Secunderabad zone</user>
+        </seed_users>
+      </role>
+    </hierarchy>
+    <enforcement>
+      <point>JWT Authentication Filter</point>
+      <method>JwtTenantFilter extracts realm_access.roles[], tenantId, msspId claims from JWT token</method>
+      <storage>Stores in ThreadLocal TenantContext for per-request scope</storage>
+      <cleanup>Filter finally block clears TenantContext to prevent thread pool leaks</cleanup>
+      <authorization>Services validate TenantContext.getRole() before executing queries</authorization>
+      <error_semantics>
+        <code>401 UNAUTHORIZED</code>
+        <when>Missing required tenantId/msspId claims in token</when>
+      </error_semantics>
+      <error_semantics>
+        <code>403 FORBIDDEN</code>
+        <when>User role not authorized for operation (e.g., MSSP trying to create lead)</when>
+      </error_semantics>
+      <error_semantics>
+        <code>404 NOT_FOUND</code>
+        <when>Lead exists but user's role cannot access it (scoping permission denied)</when>
+      </error_semantics>
+    </enforcement>
+  </accessControl>
+
+  <technology_stack>
+    <backend>
+      <framework>Spring Boot 3.x</framework>
+      <jdk>Java 17+</jdk>
+      <build>Maven 3.8+</build>
+      <security>Spring Security 6.x + OAuth2/OIDC (Keycloak)</security>
+      <database>Spring Data JPA, Hibernate ORM</database>
+      <database_driver>PostgreSQL 15+</database_driver>
+    </backend>
+    <frontend>
+      <framework>Angular 19+</framework>
+      <language>TypeScript 5.x</language>
+      <state_management>Angular Signals (read-only auth state)</state_management>
+      <authentication>Keycloak JS Adapter, KeycloakService</authentication>
+      <styling>CSS3 with CSS Variables for theming</styling>
+      <build>Angular CLI, Nx</build>
+    </frontend>
+    <infrastructure>
+      <containerization>Docker, Docker Compose</containerization>
+      <database>PostgreSQL 15 (RDBMS)</database>
+      <identity_provider>Keycloak 23+ (OAuth2/OIDC)</identity_provider>
+      <service_discovery>Spring Cloud Netflix Eureka</service_discovery>
+      <api_gateway>Spring Cloud Gateway</api_gateway>
+      <reverse_proxy>Nginx (frontend, optional)</reverse_proxy>
+    </infrastructure>
+  </technology_stack>
+
+  <dataModel>
+    <entity>
+      <name>Lead</name>
+      <scope>Area-specific (ENTERPRISE_TENANT owns and manages)</scope>
+      <attributes>
+        <attribute type="UUID">id</attribute>
+        <attribute type="UUID">tenantId - Area owner</attribute>
+        <attribute type="String">name - Lead name</attribute>
+        <attribute type="String">email - Contact email</attribute>
+        <attribute type="String">phone - Contact phone</attribute>
+        <attribute type="Enum">status - NEW, CONTACTED, QUALIFIED, CONVERTED, REJECTED</attribute>
+        <attribute type="Timestamp">createdAt, updatedAt</attribute>
+      </attributes>
+      <queries>
+        <query>findAll() - MASTER_MSSP only</query>
+        <query>findAllByTenantId(tenantId) - ENTERPRISE_TENANT reads own</query>
+        <query>findAllByTenantIdIn(tenantIds) - MSSP reads zone areas</query>
+      </queries>
+    </entity>
+    <entity>
+      <name>Tenant (Zone/Area)</name>
+      <scope>Hierarchical: Zone (MSSP parent) contains Areas (ENTERPRISE_TENANT children)</scope>
+      <attributes>
+        <attribute type="UUID">id - Tenant UUID</attribute>
+        <attribute type="String">name - Zone or Area name</attribute>
+        <attribute type="Enum">tenantRole - MSSP (zone) or ENTERPRISE_TENANT (area)</attribute>
+        <attribute type="UUID">parentTenantId - Reference to zone (for areas)</attribute>
+        <attribute type="Timestamp">createdAt, updatedAt</attribute>
+      </attributes>
+      <structure>
+        <level_1>Hyderabad Zone (MSSP)</level_1>
+        <level_2_child>├─ Abids Area (ENTERPRISE_TENANT)</level_2_child>
+        <level_2_child>├─ Attapur Area (ENTERPRISE_TENANT)</level_2_child>
+        <level_1>Secunderabad Zone (MSSP)</level_1>
+        <level_2_child>├─ Ameerpet Area (ENTERPRISE_TENANT)</level_2_child>
+        <level_2_child>├─ Secunderabad Area (ENTERPRISE_TENANT)</level_2_child>
+      </structure>
+    </entity>
+  </dataModel>
+
+  <features>
+    <feature>
+      <name>Role-Scoped Lead Management</name>
+      <description>Every lead query is filtered by user's role and tenant context. MASTER sees all, MSSP sees zone, ENTERPRISE_TENANT sees area only.</description>
+      <implementation>LeadService.getLeads() uses TenantContext.getRole() to dispatch to appropriate repository method</implementation>
+    </feature>
+    <feature>
+      <name>Zone Dashboard (MSSP)</name>
+      <description>Zone managers see aggregated metrics across all areas in their zone: total leads, areas count, conversion rate</description>
+      <implementation>frontend/zone-dashboard.component.ts; calls reportService.getMsspReport()</implementation>
+    </feature>
+    <feature>
+      <name>Area Dashboard (ENTERPRISE_TENANT)</name>
+      <description>Area managers see their assigned area's leads with status management and add-lead form</description>
+      <implementation>frontend/area-dashboard.component.ts; calls leadService.getLeads() and reportService.getMyReport()</implementation>
+    </feature>
+    <feature>
+      <name>Master Dashboard (MASTER_MSSP)</name>
+      <description>Global view of all zones, areas, and leads; can view and manage anything</description>
+      <implementation>frontend/dashboard.component; full data access via all report endpoints</implementation>
+    </feature>
+    <feature>
+      <name>Keycloak Integration</name>
+      <description>JWT-based authentication with OAuth2 authorization code flow; claims extracted for tenantId, msspId, areaName</description>
+      <implementation>Keycloak realm-export.json defines users, roles, protocol mappers; JwtTenantFilter parses JWT</implementation>
+    </feature>
+    <feature>
+      <name>Email Notifications</name>
+      <description>Async email service for lead notifications and alerts</description>
+      <implementation>leadbridge-email-service with async message queue integration</implementation>
+    </feature>
+    <feature>
+      <name>Service Discovery</name>
+      <description>Eureka-based service registry for dynamic service URLs and health checking</description>
+      <implementation>Discovery server at port 8761; all services register and deregister</implementation>
+    </feature>
+  </features>
+
+  <deployment>
+    <environment>Docker Compose (development/testing)</environment>
+    <containers>
+      <container>
+        <name>postgres</name>
+        <image>postgres:15</image>
+        <port>5432</port>
+        <env>POSTGRES_DB=leadbridge_db, POSTGRES_USER=leadbridge, POSTGRES_PASSWORD=leadbridge</env>
+      </container>
+      <container>
+        <name>keycloak</name>
+        <image>quay.io/keycloak/keycloak:latest</image>
+        <port>8180:8080</port>
+        <env>KEYCLOAK_ADMIN=admin, KEYCLOAK_ADMIN_PASSWORD=admin</env>
+        <volumes>realm-export.json (realm config)</volumes>
+      </container>
+      <container>
+        <name>discovery-server</name>
+        <build>leadbridge-discovery-server</build>
+        <port>8761</port>
+      </container>
+      <container>
+        <name>gateway</name>
+        <build>leadbridge-gateway</build>
+        <port>8080</port>
+        <depends_on>discovery-server</depends_on>
+      </container>
+      <container>
+        <name>lead-service</name>
+        <build>leadbridge-lead-service</build>
+        <port>8081</port>
+        <depends_on>postgres, discovery-server</depends_on>
+      </container>
+      <container>
+        <name>tenant-service</name>
+        <build>leadbridge-tenant-service</build>
+        <port>8082</port>
+        <depends_on>postgres, discovery-server</depends_on>
+      </container>
+      <container>
+        <name>report-service</name>
+        <build>leadbridge-report-service</build>
+        <port>8083</port>
+        <depends_on>postgres, discovery-server</depends_on>
+      </container>
+      <container>
+        <name>email-service</name>
+        <build>leadbridge-email-service</build>
+        <port>8084</port>
+        <depends_on>discovery-server</depends_on>
+      </container>
+      <container>
+        <name>frontend</name>
+        <build>frontend (nginx-based)</build>
+        <port>4200</port>
+      </container>
+    </containers>
+    <startup_command>cd infrastructure && docker-compose up --build</startup_command>
+    <health_endpoints>
+      <endpoint>Keycloak: http://localhost:8180</endpoint>
+      <endpoint>Frontend: http://localhost:4200</endpoint>
+      <endpoint>API Gateway: http://localhost:8080</endpoint>
+      <endpoint>Discovery Server: http://localhost:8761</endpoint>
+    </health_endpoints>
+  </deployment>
+
+  <implementation_status>
+    <completed>
+      <item>✅ TenantContext with role, tenantId, msspId ThreadLocal storage</item>
+      <item>✅ JwtTenantFilter extracting and populating context from JWT claims</item>
+      <item>✅ Lead repository with role-aware query methods (findAll, findByTenantId, findByTenantIdIn)</item>
+      <item>✅ LeadService with role-scoped business logic (MASTER→all, MSSP→zone, TENANT→area)</item>
+      <item>✅ ReportService with role-based filtering (global, mssp, tenant)</item>
+      <item>✅ Frontend AuthStateService with Angular signals for auth state</item>
+      <item>✅ RoleGuard enforcing route-level access control</item>
+      <item>✅ Zone and Area dashboards with modern UI (hero shell, metric cards)</item>
+      <item>✅ Keycloak realm configuration with 7 seeded users and protocol mappers</item>
+      <item>✅ Docker compose setup with all 7 services and infrastructure</item>
+    </completed>
+    <in_progress>
+      <item>🟠 Docker build verification (lead-service Maven compile patch recently applied)</item>
+    </in_progress>
+    <future>
+      <item>Test role-scoped data visibility across all logins</item>
+      <item>Master dashboard global view implementation</item>
+      <item>Advanced reporting and analytics</item>
+      <item>Audit logging for compliance</item>
+    </future>
+  </implementation_status>
+
+  <testing_credentials>
+    <user>
+      <username>master</username>
+      <password>master123</password>
+      <role>MASTER_MSSP</role>
+      <access>Global (all zones, all areas, all leads)</access>
+      <dashboard>/dashboard/master</dashboard>
+    </user>
+    <user>
+      <username>hyd-zone</username>
+      <password>hyd123</password>
+      <role>MSSP</role>
+      <zone>Hyderabad</zone>
+      <areas>Abids, Attapur</areas>
+      <access>Zone-scoped (Hyderabad zone only)</access>
+      <dashboard>/dashboard/zone</dashboard>
+    </user>
+    <user>
+      <username>sec-zone</username>
+      <password>sec123</password>
+      <role>MSSP</role>
+      <zone>Secunderabad</zone>
+      <areas>Ameerpet, Secunderabad</areas>
+      <access>Zone-scoped (Secunderabad zone only)</access>
+      <dashboard>/dashboard/zone</dashboard>
+    </user>
+    <user>
+      <username>abids-area</username>
+      <password>abids123</password>
+      <role>ENTERPRISE_TENANT</role>
+      <area>Abids (under Hyderabad zone)</area>
+      <access>Area-scoped (Abids area only)</access>
+      <dashboard>/dashboard/area</dashboard>
+    </user>
+    <user>
+      <username>attapur-area</username>
+      <password>attapur123</password>
+      <role>ENTERPRISE_TENANT</role>
+      <area>Attapur (under Hyderabad zone)</area>
+      <access>Area-scoped (Attapur area only)</access>
+      <dashboard>/dashboard/area</dashboard>
+    </user>
+    <user>
+      <username>ameerpet-area</username>
+      <password>ameerpet123</password>
+      <role>ENTERPRISE_TENANT</role>
+      <area>Ameerpet (under Secunderabad zone)</area>
+      <access>Area-scoped (Ameerpet area only)</access>
+      <dashboard>/dashboard/area</dashboard>
+    </user>
+    <user>
+      <username>secunderabad-area</username>
+      <password>secarea123</password>
+      <role>ENTERPRISE_TENANT</role>
+      <area>Secunderabad (under Secunderabad zone)</area>
+      <access>Area-scoped (Secunderabad area only)</access>
+      <dashboard>/dashboard/area</dashboard>
+    </user>
+  </testing_credentials>
+
+  <key_files>
+    <backend>
+      <file path="backend/leadbridge-common/src/main/java/com/leadbridge/common/context/TenantContext.java">
+        <purpose>ThreadLocal context holder for role, tenantId, msspId</purpose>
+      </file>
+      <file path="backend/leadbridge-lead-service/src/main/java/com/leadbridge/lead/security/JwtTenantFilter.java">
+        <purpose>JWT claim extraction and TenantContext population</purpose>
+      </file>
+      <file path="backend/leadbridge-lead-service/src/main/java/com/leadbridge/lead/service/LeadService.java">
+        <purpose>Role-aware lead CRUD operations</purpose>
+      </file>
+      <file path="backend/leadbridge-report-service/src/main/java/com/leadbridge/report/controller/ReportController.java">
+        <purpose>Role-scoped report endpoints</purpose>
+      </file>
+    </backend>
+    <frontend>
+      <file path="frontend/src/app/core/services/auth-state.service.ts">
+        <purpose>Central auth state with Angular signals (role, tenantId, msspId)</purpose>
+      </file>
+      <file path="frontend/src/app/core/guards/role.guard.ts">
+        <purpose>Route-level role authorization</purpose>
+      </file>
+      <file path="frontend/src/app/features/dashboard/zone-dashboard.component.ts">
+        <purpose>Zone manager dashboard with modern UI</purpose>
+      </file>
+      <file path="frontend/src/app/features/dashboard/area-dashboard.component.ts">
+        <purpose>Area manager dashboard with lead management</purpose>
+      </file>
+    </frontend>
+    <infrastructure>
+      <file path="infrastructure/docker-compose.yml">
+        <purpose>Multi-container orchestration for all services</purpose>
+      </file>
+      <file path="infrastructure/keycloak/realm-export.json">
+        <purpose>Keycloak realm config with users, roles, protocol mappers</purpose>
+      </file>
+    </infrastructure>
+  </key_files>
+
+  <quick_start>
+    <step number="1">Navigate to infrastructure folder: cd infrastructure</step>
+    <step number="2">Start all services: docker-compose up --build</step>
+    <step number="3">Wait for services to be healthy (2-3 minutes)</step>
+    <step number="4">Access frontend: http://localhost:4200</step>
+    <step number="5">Login with any test credentials (see testing_credentials section)</step>
+    <step number="6">Verify role-scoped dashboard loads correct data for role</step>
+    <step number="7">Test data visibility by switching between different user roles</step>
+  </quick_start>
+
+  <notes>
+    <note>
+      <category>Security</category>
+      <content>All requests pass through JwtTenantFilter which validates JWT and populates TenantContext. 
+               Missing or invalid tokens result in 401 UNAUTHORIZED. Role mismatches result in 403 FORBIDDEN 
+               or 404 NOT_FOUND (scoped resource not visible).</content>
+    </note>
+    <note>
+      <category>Database</category>
+      <content>PostgreSQL seed data includes leads distributed across areas. Lead counts align with 
+               seeded area tenantId values. TenantContext filtering ensures no cross-tenant data leakage.</content>
+    </note>
+    <note>
+      <category>Keycloak</category>
+      <content>realm-export.json is imported during Keycloak startup. Users have tenantId, msspId, areaName 
+               attributes mapped to JWT claims via protocol mappers on leadbridge-frontend client.</content>
+    </note>
+    <note>
+      <category>Frontend</category>
+      <content>AuthStateService initializes during APP_INITIALIZER phase after Keycloak.init() completes. 
+               All auth state reads use signals (currentRole, currentTenantId, currentMsspId). 
+               RoleGuard prevents template compilation if user lacks required role.</content>
+    </note>
+  </notes>
+
+</project>

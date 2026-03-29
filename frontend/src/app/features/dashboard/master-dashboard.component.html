@@ -1,0 +1,191 @@
+<div class="master-dashboard">
+  <div class="hero-shell">
+    <h2 style="margin:0;">LeadPro — Master Dashboard</h2>
+    <button mat-stroked-button (click)="authService.logout()">Logout</button>
+  </div>
+
+  <div *ngIf="loading" style="display:flex; justify-content:center; padding:40px;">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="error" style="color: red; margin-bottom:16px;">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && !error">
+
+    <div class="stats-grid">
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-value">{{ totalLeads }}</div>
+          <div class="metric-label">Total leads</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-value">{{ reports.length }}</div>
+          <div class="metric-label">Active areas</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-value">{{ totalZones }}</div>
+          <div class="metric-label">Zones</div>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="metric-card">
+        <mat-card-content>
+          <div class="metric-value">{{ avgConversionRate }}%</div>
+          <div class="metric-label">Avg conversion</div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card style="margin-bottom:24px;">
+      <mat-card-header>
+        <mat-card-title>Area breakdown & Leads</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table class="custom-table" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Total leads</th>
+              <th>Converted</th>
+              <th>Conversion rate</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let r of reports">
+              <tr (click)="toggleArea(r.areaName)" style="cursor:pointer; border-bottom: 1px solid #eee;">
+                <td style="padding: 12px;">{{ r.areaName }}</td>
+                <td style="padding: 12px;">{{ r.totalLeads }}</td>
+                <td style="padding: 12px;">{{ r.byStatus['CONVERTED'] || 0 }}</td>
+                <td style="padding: 12px;">{{ r.conversionRate }}%</td>
+                <td style="padding: 12px;">
+                  <button mat-button color="primary">
+                    {{ expandedAreas[r.areaName] ? '▲ Hide Leads' : '▼ View Leads' }}
+                  </button>
+                </td>
+              </tr>
+              <!-- Expanded Leads Table -->
+              <tr *ngIf="expandedAreas[r.areaName]" style="background-color: #f9f9f9;">
+                <td colspan="5" style="padding: 16px;">
+                  <div style="font-weight: bold; margin-bottom: 8px;">Leads for {{ r.areaName }}</div>
+                  <table class="lead-detail-table" style="width: 100%; background: white; border: 1px solid #ddd; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: #eee;">
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Name</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Email</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Phone</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                        <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let lead of getLeadsForArea(r.tenantId)">
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ lead.name }}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ lead.email }}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ lead.phone }}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                          <span class="status-badge" [ngClass]="lead.status.toLowerCase()">{{ lead.status }}</span>
+                        </td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">{{ lead.notes }}</td>
+                      </tr>
+                      <tr *ngIf="getLeadsForArea(r.tenantId).length === 0">
+                        <td colspan="5" style="padding: 16px; text-align: center; color: #666;">No leads found in this area.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Tenant management (Grouped by Zone)</mat-card-title>
+        <div style="flex:1;"></div>
+        <button mat-raised-button color="accent" (click)="showForm = !showForm">
+          Register new tenant
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+
+        <div *ngIf="showForm" style="padding:16px 0; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+          <mat-form-field appearance="outline">
+            <mat-label>Tenant name</mat-label>
+            <input matInput [(ngModel)]="newTenant.name">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Area</mat-label>
+            <input matInput [(ngModel)]="newTenant.area">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Role</mat-label>
+            <mat-select [(ngModel)]="newTenant.tenantRole">
+              <mat-option value="MSSP">MSSP</mat-option>
+              <mat-option value="ENTERPRISE_TENANT">Enterprise tenant</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-raised-button color="primary" (click)="createTenant()">Save</button>
+          <button mat-button (click)="showForm = false">Cancel</button>
+        </div>
+
+        <table class="custom-table" style="width:100%; border-collapse: collapse; margin-top: 16px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+              <th style="padding: 12px;">Name</th>
+              <th style="padding: 12px;">Area</th>
+              <th style="padding: 12px;">Role</th>
+              <th style="padding: 12px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let group of groupedTenants">
+              <!-- Zone Header Row -->
+              <tr style="background-color: #f0f4f8; border-bottom: 1px solid #ccc; font-weight: bold;">
+                <td style="padding: 12px;">{{ group.zone.name }}</td>
+                <td style="padding: 12px;">{{ group.zone.area }}</td>
+                <td style="padding: 12px;"><span style="background: #bbdefb; padding: 4px 8px; border-radius: 4px; font-size: 12px;">MSSP</span></td>
+                <td style="padding: 12px;">
+                  <button mat-icon-button color="primary" title="Edit"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button color="warn" (click)="deleteTenant(group.zone.id)" title="Delete"><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+              <!-- Area Children Rows -->
+              <tr *ngFor="let area of group.areas" style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px; padding-left: 36px;">↳ {{ area.name }}</td>
+                <td style="padding: 12px;">{{ area.area }}</td>
+                <td style="padding: 12px;"><span style="background: #e1bee7; padding: 4px 8px; border-radius: 4px; font-size: 12px;">ENTERPRISE_TENANT</span></td>
+                <td style="padding: 12px;">
+                  <button mat-icon-button color="primary" title="Edit"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button color="warn" (click)="deleteTenant(area.id)" title="Delete"><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+            </ng-container>
+            
+            <!-- Independent/Unmapped tenants (if any) -->
+            <ng-container *ngIf="unmappedTenants.length > 0">
+              <tr style="background-color: #fff9c4; border-bottom: 1px solid #ccc; font-weight: bold;">
+                <td colspan="4" style="padding: 12px;">Unmapped / Global Tenants</td>
+              </tr>
+              <tr *ngFor="let u of unmappedTenants" style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px;">{{ u.name }}</td>
+                <td style="padding: 12px;">{{ u.area }}</td>
+                <td style="padding: 12px;">{{ u.tenantRole }}</td>
+                <td style="padding: 12px;">
+                  <button mat-icon-button color="primary"><mat-icon>edit</mat-icon></button>
+                  <button mat-icon-button color="warn" (click)="deleteTenant(u.id)"><mat-icon>delete</mat-icon></button>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+</div>

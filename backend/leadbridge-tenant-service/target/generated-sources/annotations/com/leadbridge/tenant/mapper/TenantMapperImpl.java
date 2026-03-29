@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-03-29T21:35:02+0530",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260224-0835, environment: Java 21.0.10 (Oracle Corporation)"
+    date = "2026-03-30T02:09:21+0530",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 21.0.10 (Oracle Corporation)"
 )
 @Component
 public class TenantMapperImpl implements TenantMapper {
@@ -22,9 +22,9 @@ public class TenantMapperImpl implements TenantMapper {
 
         Tenant.TenantBuilder tenant = Tenant.builder();
 
+        tenant.name( dto.getName() );
         tenant.area( dto.getArea() );
         tenant.msspId( dto.getMsspId() );
-        tenant.name( dto.getName() );
         tenant.tenantRole( dto.getTenantRole() );
 
         return tenant.build();

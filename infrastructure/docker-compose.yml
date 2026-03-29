@@ -28,6 +28,10 @@ services:
       KC_DB_PASSWORD: root
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
     command: start-dev --import-realm
     volumes:
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm.json
@@ -78,6 +82,9 @@ services:
       context: ../backend
       dockerfile: leadbridge-tenant-service/Dockerfile
     container_name: tenant-service
+    environment:
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
+      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,6 +100,9 @@ services:
       context: ../backend
       dockerfile: leadbridge-lead-service/Dockerfile
     container_name: lead-service
+    environment:
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
+      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -117,6 +127,9 @@ services:
       context: ../backend
       dockerfile: leadbridge-report-service/Dockerfile
     container_name: report-service
+    environment:
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
+      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,0 +1,123 @@
+<div class="area-dashboard">
+      <div class="hero-shell">
+        <div class="hero-header">
+          <div>
+            <h2>My Area Dashboard</h2>
+            <p>Track pipeline health and keep lead actions moving.</p>
+          </div>
+          <button mat-stroked-button (click)="authService.logout()">Logout</button>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="loading-block">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div *ngIf="error" class="error-banner">{{ error }}</div>
+
+      <ng-container *ngIf="!loading && !error">
+
+        <div class="stats-grid">
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ report?.totalLeads || 0 }}</div>
+              <div class="metric-label">My leads</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ report?.byStatus?.['NEW'] || 0 }}</div>
+              <div class="metric-label">New</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ report?.conversionRate || 0 }}%</div>
+              <div class="metric-label">Conversion rate</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <mat-card class="main-panel">
+          <mat-card-header>
+            <mat-card-title>My leads</mat-card-title>
+            <div class="grow"></div>
+            <button mat-raised-button color="primary" (click)="showAddForm = !showAddForm">
+              Add lead
+            </button>
+          </mat-card-header>
+          <mat-card-content>
+
+            <div *ngIf="showAddForm" class="lead-form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput [(ngModel)]="newLead.name">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Email</mat-label>
+                <input matInput [(ngModel)]="newLead.email">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Phone</mat-label>
+                <input matInput [(ngModel)]="newLead.phone">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Notes</mat-label>
+                <input matInput [(ngModel)]="newLead.notes">
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="addLead()">Save</button>
+              <button mat-button (click)="showAddForm = false">Cancel</button>
+            </div>
+
+            <p *ngIf="leads.length === 0" class="empty-state">No leads found for this tenant.</p>
+
+            <table mat-table [dataSource]="leads" style="width:100%;" *ngIf="leads.length > 0">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let l">{{ l.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="email">
+                <th mat-header-cell *matHeaderCellDef>Email</th>
+                <td mat-cell *matCellDef="let l">{{ l.email }}</td>
+              </ng-container>
+              <ng-container matColumnDef="phone">
+                <th mat-header-cell *matHeaderCellDef>Phone</th>
+                <td mat-cell *matCellDef="let l">{{ l.phone }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let l">
+                  <span [style.background]="statusColor(l.status)" class="status-pill">
+                    {{ l.status }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="notes">
+                <th mat-header-cell *matHeaderCellDef>Notes</th>
+                <td mat-cell *matCellDef="let l" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="l.notes">
+                  {{ l.notes }}
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>        
+                <td mat-cell *matCellDef="let l">
+                  <mat-select [value]="l.status" (selectionChange)="updateStatus(l.id, $event.value)"
+                              style="font-size:12px; width:130px; margin-right: 8px;">
+                    <mat-option *ngFor="let s of statuses" [value]="s">{{ s }}</mat-option>
+                  </mat-select>
+                  <button mat-icon-button color="primary" (click)="editLead(l)" title="Edit">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteLead(l.id)" title="Delete">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="columns"></tr>
+              <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+
+      </ng-container>
+    </div>

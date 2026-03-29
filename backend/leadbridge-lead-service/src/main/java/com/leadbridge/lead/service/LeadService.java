@@ -10,14 +10,21 @@ import com.leadbridge.lead.repository.LeadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Slf4j
 @Service
@@ -27,8 +34,24 @@ public class LeadService {
     private final LeadRepository leadRepository;
     private final LeadMapper leadMapper;
 
+    // Seed-aligned scope map for MSSP zone managers.
+    private static final Map<String, List<String>> MSSP_TO_TENANTS = Map.of(
+        "aaaaaaaa-0000-0000-0000-000000000001", Arrays.asList(
+            "bbbbbbbb-0000-0000-0000-000000000001",
+            "bbbbbbbb-0000-0000-0000-000000000002"
+        ),
+        "aaaaaaaa-0000-0000-0000-000000000002", Arrays.asList(
+            "bbbbbbbb-0000-0000-0000-000000000003",
+            "bbbbbbbb-0000-0000-0000-000000000004"
+        )
+    );
+
     @Transactional
     public LeadResponseDto createLead(LeadRequestDto requestDto) {
+        String role = validateRole();
+        if (!"ENTERPRISE_TENANT".equals(role)) {
+            throw new ResponseStatusException(FORBIDDEN, "Only area managers can create leads");
+        }
         String tenantId = validateTenantId();
         Lead lead = leadMapper.toEntity(requestDto);
         lead.setTenantId(tenantId);
@@ -44,23 +67,38 @@ public class LeadService {
     }
 
     public Page<LeadResponseDto> getLeads(Pageable pageable) {
+        String role = validateRole();
+
+        if ("MASTER_MSSP".equals(role)) {
+            return leadRepository.findAll(pageable).map(leadMapper::toDto);
+        }
+
+        if ("MSSP".equals(role)) {
+            List<String> tenantIds = resolveMsspTenantIds();
+            if (tenantIds.isEmpty()) {
+                return new PageImpl<>(List.of(), pageable, 0);
+            }
+            return leadRepository.findAllByTenantIdIn(tenantIds, pageable)
+                    .map(leadMapper::toDto);
+        }
+
         String tenantId = validateTenantId();
-        return leadRepository.findAllByTenantId(tenantId, pageable)
-                .map(leadMapper::toDto);
+        return leadRepository.findAllByTenantId(tenantId, pageable).map(leadMapper::toDto);
     }
 
     public LeadResponseDto getLeadById(UUID id) {
-        String tenantId = validateTenantId();
-        return leadRepository.findByIdAndTenantId(id, tenantId)
+        return resolveReadableLead(id)
                 .map(leadMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("ResourceNotFoundException"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Lead not found"));
     }
 
     @Transactional
     public LeadResponseDto updateLead(UUID id, LeadRequestDto requestDto) {
-        String tenantId = validateTenantId();
-        Lead existingLead = leadRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new RuntimeException("ResourceNotFoundException"));
+        String role = validateRole();
+        if ("MSSP".equals(role)) {
+            throw new ResponseStatusException(FORBIDDEN, "Zone managers cannot update leads");
+        }
+        Lead existingLead = resolveWritableLead(id, role);
 
         existingLead.setName(requestDto.getName());
         existingLead.setEmail(requestDto.getEmail());
@@ -75,9 +113,11 @@ public class LeadService {
 
     @Transactional
     public LeadResponseDto patchStatus(UUID id, LeadStatus newStatus) {
-        String tenantId = validateTenantId();
-        Lead existingLead = leadRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new RuntimeException("ResourceNotFoundException"));
+        String role = validateRole();
+        if ("MSSP".equals(role)) {
+            throw new ResponseStatusException(FORBIDDEN, "Zone managers cannot update lead status");
+        }
+        Lead existingLead = resolveWritableLead(id, role);
 
         existingLead.setStatus(newStatus);
         existingLead.setUpdatedAt(LocalDateTime.now());
@@ -88,9 +128,11 @@ public class LeadService {
 
     @Transactional
     public void deleteLead(UUID id) {
-        String tenantId = validateTenantId();
-        Lead lead = leadRepository.findByIdAndTenantId(id, tenantId)
-                .orElseThrow(() -> new RuntimeException("Lead not found"));
+        String role = validateRole();
+        if (!"MASTER_MSSP".equals(role) && !"ENTERPRISE_TENANT".equals(role)) {
+            throw new ResponseStatusException(FORBIDDEN, "Only platform admin or area manager can delete leads");
+        }
+        Lead lead = resolveWritableLead(id, role);
         leadRepository.delete(lead);
     }
 
@@ -111,11 +153,50 @@ public class LeadService {
         }
     }
 
+    private Lead resolveWritableLead(UUID id, String role) {
+        if ("MASTER_MSSP".equals(role)) {
+            return leadRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Lead not found"));
+        }
+
+        String tenantId = validateTenantId();
+        return leadRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new ResponseStatusException(FORBIDDEN, "Access denied to this lead"));
+    }
+
+    private java.util.Optional<Lead> resolveReadableLead(UUID id) {
+        String role = validateRole();
+        if ("MASTER_MSSP".equals(role)) {
+            return leadRepository.findById(id);
+        }
+        if ("MSSP".equals(role)) {
+            List<String> tenantIds = resolveMsspTenantIds();
+            return tenantIds.isEmpty() ? java.util.Optional.empty() : leadRepository.findByIdAndTenantIdIn(id, tenantIds);
+        }
+        return leadRepository.findByIdAndTenantId(id, validateTenantId());
+    }
+
+    private String validateRole() {
+        String role = TenantContext.getRole();
+        if (role == null || role.isBlank()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing role in access token");
+        }
+        return role;
+    }
+
     private String validateTenantId() {
         String tenantId = TenantContext.getTenantId();
         if (tenantId == null || tenantId.isBlank()) {
-            throw new RuntimeException("Tenant context not found");
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing tenantId claim in access token");
         }
         return tenantId;
+    }
+
+    private List<String> resolveMsspTenantIds() {
+        String msspId = TenantContext.getMsspId();
+        if (msspId == null || msspId.isBlank()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing msspId claim in access token");
+        }
+        return MSSP_TO_TENANTS.getOrDefault(msspId, List.of());
     }
 }

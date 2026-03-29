@@ -1,6 +1,7 @@
 package com.leadbridge.report.service;
 
 import com.leadbridge.common.enums.LeadStatus;
+import com.leadbridge.common.enums.TenantRole;
 import com.leadbridge.common.dto.TenantResponseDto;
 import com.leadbridge.report.client.LeadServiceClient;
 import com.leadbridge.report.client.TenantServiceClient;
@@ -48,6 +49,7 @@ public class ReportService {
 
         return tenantServiceClient.getMyTenants().getData()
                 .stream()
+                .filter(t -> t.getTenantRole() == TenantRole.ENTERPRISE_TENANT)
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());
     }
@@ -57,6 +59,7 @@ public class ReportService {
 
         return tenantServiceClient.getAllTenants().getData()
                 .stream()
+                .filter(t -> t.getTenantRole() == TenantRole.ENTERPRISE_TENANT)
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());
     }

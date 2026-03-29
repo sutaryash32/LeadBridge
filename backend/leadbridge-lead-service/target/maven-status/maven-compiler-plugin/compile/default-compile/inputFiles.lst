@@ -7,6 +7,5 @@ C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lea
 C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\dto\LeadRequestDto.java
 C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\repository\LeadRepository.java
 C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\mapper\LeadMapper.java
-C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\config\JacksonConfig.java
 C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\controller\LeadController.java
 C:\Users\Yash\OneDrive - Motivity Labs\Desktop\LeadBridge\backend\leadbridge-lead-service\src\main\java\com\leadbridge\lead\security\JwtTenantFilter.java

@@ -7,11 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   selector: 'app-redirect',
   standalone: true,
   imports: [MatProgressSpinnerModule],
-  template: `
-    <div style="display:flex; justify-content:center; padding:80px;">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
-  `
+  templateUrl: './redirect.component.html',
 })
 export class RedirectComponent implements OnInit {
   constructor(private router: Router, private authService: AuthService) {}

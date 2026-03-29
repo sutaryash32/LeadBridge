@@ -1,7 +1,6 @@
 com\leadbridge\lead\security\JwtTenantFilter.class
 com\leadbridge\lead\service\LeadService.class
 com\leadbridge\lead\dto\LeadRequestDto.class
-com\leadbridge\lead\config\JacksonConfig.class
 com\leadbridge\lead\repository\LeadRepository.class
 com\leadbridge\lead\mapper\LeadMapper.class
 com\leadbridge\lead\entity\Lead$LeadBuilder.class

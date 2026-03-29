@@ -8,30 +8,45 @@ export const routes: Routes = [
     redirectTo: 'redirect'
   },
   {
-    path: 'redirect',
-    loadComponent: () =>
-      import('./features/dashboard/redirect.component').then(m => m.RedirectComponent)
-  },
-  {
-    path: 'master',
+    path: 'dashboard/master',
     loadComponent: () =>
       import('./features/dashboard/master-dashboard.component').then(m => m.MasterDashboardComponent),
     canActivate: [RoleGuard],
     data: { roles: ['MASTER_MSSP'] }
   },
   {
-    path: 'zone',
+    path: 'dashboard/zone',
     loadComponent: () =>
       import('./features/dashboard/zone-dashboard.component').then(m => m.ZoneDashboardComponent),
     canActivate: [RoleGuard],
     data: { roles: ['MSSP'] }
   },
   {
-    path: 'area',
+    path: 'dashboard/area',
     loadComponent: () =>
       import('./features/dashboard/area-dashboard.component').then(m => m.AreaDashboardComponent),
     canActivate: [RoleGuard],
     data: { roles: ['ENTERPRISE_TENANT'] }
+  },
+  {
+    path: 'redirect',
+    loadComponent: () =>
+      import('./features/dashboard/redirect.component').then(m => m.RedirectComponent)
+  },
+  {
+    path: 'master',
+    pathMatch: 'full',
+    redirectTo: 'dashboard/master'
+  },
+  {
+    path: 'zone',
+    pathMatch: 'full',
+    redirectTo: 'dashboard/zone'
+  },
+  {
+    path: 'area',
+    pathMatch: 'full',
+    redirectTo: 'dashboard/area'
   },
   {
     path: 'unauthorized',

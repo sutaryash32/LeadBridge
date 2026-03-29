@@ -1,0 +1,49 @@
+.master-dashboard {
+  padding: 24px;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+.hero-shell {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.stats-grid {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.metric-card {
+  min-width: 160px;
+  text-align: center;
+  flex: 1;
+}
+.metric-value {
+  font-size: 32px;
+  font-weight: 500;
+  color: #1976d2;
+}
+.metric-label {
+  color: #666;
+  margin-top: 8px;
+  font-size: 14px;
+}
+th {
+  text-align: left;
+}
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.status-badge.new { background: #e0e0e0; }
+.status-badge.contacted { background: #bbdefb; }
+.status-badge.qualified { background: #fff9c4; }
+.status-badge.converted { background: #c8e6c9; }
+.status-badge.lost { background: #ffcdd2; }

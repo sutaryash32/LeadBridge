@@ -1,0 +1,75 @@
+<div class="zone-dashboard">
+      <div class="hero-shell">
+        <div class="hero-header">
+          <div>
+            <h2>Zone Dashboard</h2>
+            <p>Monitor area performance and zone-wide conversion health.</p>
+          </div>
+          <button mat-stroked-button (click)="authService.logout()">Logout</button>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="loading-block">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div *ngIf="error" class="error-banner">{{ error }}</div>
+
+      <ng-container *ngIf="!loading && !error">
+
+        <div class="stats-grid">
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ totalLeads }}</div>
+              <div class="metric-label">Leads in zone</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ reports.length }}</div>
+              <div class="metric-label">Areas</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="metric-card">
+            <mat-card-content>
+              <div class="metric-value">{{ avgConversionRate }}%</div>
+              <div class="metric-label">Zone conversion</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <mat-card class="main-panel">
+          <mat-card-header>
+            <mat-card-title>My areas</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p *ngIf="reports.length === 0" class="empty-state">No areas found for this zone.</p>
+            <table mat-table [dataSource]="reports" style="width:100%;" *ngIf="reports.length > 0">
+              <ng-container matColumnDef="areaName">
+                <th mat-header-cell *matHeaderCellDef>Area</th>
+                <td mat-cell *matCellDef="let r">{{ r.areaName }}</td>
+              </ng-container>
+              <ng-container matColumnDef="totalLeads">
+                <th mat-header-cell *matHeaderCellDef>Total leads</th>
+                <td mat-cell *matCellDef="let r">{{ r.totalLeads }}</td>
+              </ng-container>
+              <ng-container matColumnDef="new">
+                <th mat-header-cell *matHeaderCellDef>New</th>
+                <td mat-cell *matCellDef="let r">{{ r.byStatus['NEW'] || 0 }}</td>
+              </ng-container>
+              <ng-container matColumnDef="converted">
+                <th mat-header-cell *matHeaderCellDef>Converted</th>
+                <td mat-cell *matCellDef="let r">{{ r.byStatus['CONVERTED'] || 0 }}</td>
+              </ng-container>
+              <ng-container matColumnDef="conversionRate">
+                <th mat-header-cell *matHeaderCellDef>Conversion rate</th>
+                <td mat-cell *matCellDef="let r">{{ r.conversionRate }}%</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="columns"></tr>
+              <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+
+      </ng-container>
+    </div>

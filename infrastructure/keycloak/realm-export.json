@@ -1,84 +1,209 @@
 {
-    "realm": "leadbridge",
-    "enabled": true,
-    "clients": [
-      {
-        "clientId": "leadbridge-frontend",
-        "enabled": true,
-        "publicClient": true,
-        "directAccessGrantsEnabled": true,
-        "standardFlowEnabled": true,
-        "redirectUris": [
-          "http://localhost:4200/*"
-        ],
-        "webOrigins": [
-          "http://localhost:4200"
-        ]
-      }
-    ],
-    "roles": {
-      "realm": [
+  "realm": "leadbridge",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 3600,
+
+  "clients": [
+    {
+      "clientId": "leadbridge-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "protocolMappers": [
         {
-          "name": "MASTER_MSSP",
-          "description": "Master super admin"
+          "name": "tenantId-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "tenantId",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "tenantId",
+            "jsonType.label": "String"
+          }
         },
         {
-          "name": "MSSP",
-          "description": "Zone Manager"
+          "name": "msspId-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "msspId",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "msspId",
+            "jsonType.label": "String"
+          }
         },
         {
-          "name": "ENTERPRISE_TENANT",
-          "description": "Area Manager"
+          "name": "areaName-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "areaName",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "areaName",
+            "jsonType.label": "String"
+          }
         }
       ]
-    },
-    "users": [
+    }
+  ],
+
+  "roles": {
+    "realm": [
       {
-        "username": "master",
-        "enabled": true,
-        "credentials": [
-          {
-            "type": "password",
-            "value": "master",
-            "temporary": false
-          }
-        ],
-        "realmRoles": [
-          "MASTER_MSSP"
-        ]
+        "name": "MASTER_MSSP",
+        "description": "God-mode — sees all zones, all areas, all leads"
       },
       {
-        "username": "zone",
-        "enabled": true,
-        "credentials": [
-          {
-            "type": "password",
-            "value": "zone",
-            "temporary": false
-          }
-        ],
-        "realmRoles": [
-          "MSSP"
-        ]
+        "name": "MSSP",
+        "description": "Zone manager — sees only areas under their zone"
       },
       {
-        "username": "area",
-        "enabled": true,
-        "credentials": [
-          {
-            "type": "password",
-            "value": "area",
-            "temporary": false
-          }
-        ],
-        "attributes": {
-          "tenantId": [
-            "aaaaaaaa-0000-0000-0000-000000000001"
-          ]
-        },
-        "realmRoles": [
-          "ENTERPRISE_TENANT"
-        ]
+        "name": "ENTERPRISE_TENANT",
+        "description": "Area manager — sees only leads in their area"
       }
     ]
-  }
+  },
+
+  "users": [
+
+    {
+      "username": "master",
+      "email": "master@leadbridge.in",
+      "firstName": "Master",
+      "lastName": "Admin",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "master123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["00000000-0000-0000-0000-000000000001"],
+        "msspId":   [""],
+        "areaName": ["ALL"]
+      },
+      "realmRoles": ["MASTER_MSSP"]
+    },
+
+    {
+      "username": "hyd-zone",
+      "email": "zone@hyderabad.leadbridge.in",
+      "firstName": "Hyderabad",
+      "lastName": "Zone Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "hyd123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["aaaaaaaa-0000-0000-0000-000000000001"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000001"],
+        "areaName": ["Hyderabad Zone"]
+      },
+      "realmRoles": ["MSSP"]
+    },
+
+    {
+      "username": "sec-zone",
+      "email": "zone@secunderabad.leadbridge.in",
+      "firstName": "Secunderabad",
+      "lastName": "Zone Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "sec123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["aaaaaaaa-0000-0000-0000-000000000002"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000002"],
+        "areaName": ["Secunderabad Zone"]
+      },
+      "realmRoles": ["MSSP"]
+    },
+
+    {
+      "username": "abids-area",
+      "email": "manager@abids.leadbridge.in",
+      "firstName": "Abids",
+      "lastName": "Area Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "abids123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["bbbbbbbb-0000-0000-0000-000000000001"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000001"],
+        "areaName": ["Abids"]
+      },
+      "realmRoles": ["ENTERPRISE_TENANT"]
+    },
+
+    {
+      "username": "attapur-area",
+      "email": "manager@attapur.leadbridge.in",
+      "firstName": "Attapur",
+      "lastName": "Area Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "attapur123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["bbbbbbbb-0000-0000-0000-000000000002"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000001"],
+        "areaName": ["Attapur"]
+      },
+      "realmRoles": ["ENTERPRISE_TENANT"]
+    },
+
+    {
+      "username": "ameerpet-area",
+      "email": "manager@ameerpet.leadbridge.in",
+      "firstName": "Ameerpet",
+      "lastName": "Area Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "ameerpet123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["bbbbbbbb-0000-0000-0000-000000000003"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000002"],
+        "areaName": ["Ameerpet"]
+      },
+      "realmRoles": ["ENTERPRISE_TENANT"]
+    },
+
+    {
+      "username": "secunderabad-area",
+      "email": "manager@secunderabad-area.leadbridge.in",
+      "firstName": "Secunderabad",
+      "lastName": "Area Manager",
+      "enabled": true,
+      "credentials": [
+        { "type": "password", "value": "secarea123", "temporary": false }
+      ],
+      "attributes": {
+        "tenantId": ["bbbbbbbb-0000-0000-0000-000000000004"],
+        "msspId":   ["aaaaaaaa-0000-0000-0000-000000000002"],
+        "areaName": ["Secunderabad"]
+      },
+      "realmRoles": ["ENTERPRISE_TENANT"]
+    }
+
+  ]
+}

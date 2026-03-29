@@ -1,30 +1,24 @@
 import { Injectable } from '@angular/core';
 import { KeycloakService } from 'keycloak-angular';
-
-export type AppRole = 'MASTER_MSSP' | 'MSSP' | 'ENTERPRISE_TENANT' | 'UNKNOWN';
+import { AuthStateService, AppRole } from './auth-state.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  constructor(private keycloak: KeycloakService) {}
+  constructor(
+    private keycloak: KeycloakService,
+    private authState: AuthStateService
+  ) {}
 
   hasRole(role: string): boolean {
-    return this.keycloak.isUserInRole(role);
+    return this.authState.currentRole() === role;
   }
 
   getUserRole(): AppRole {
-    if (this.hasRole('MASTER_MSSP')) return 'MASTER_MSSP';
-    if (this.hasRole('MSSP')) return 'MSSP';
-    if (this.hasRole('ENTERPRISE_TENANT')) return 'ENTERPRISE_TENANT';
-    return 'UNKNOWN';
+    return this.authState.currentRole();
   }
 
   getDashboardRoute(): string {
-    switch (this.getUserRole()) {
-      case 'MASTER_MSSP':    return '/master';
-      case 'MSSP':           return '/zone';
-      case 'ENTERPRISE_TENANT': return '/area';
-      default:               return '/unauthorized';
-    }
+    return this.authState.dashboardRoute();
   }
 
   logout(): void {

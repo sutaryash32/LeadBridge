@@ -10,9 +10,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @RequestMapping("/api/tenants")
@@ -31,7 +33,13 @@ public class TenantController {
     @PreAuthorize("hasRole('MSSP')")
     public ResponseEntity<ApiResponse<List<TenantResponseDto>>> getMyTenants(
             @AuthenticationPrincipal Jwt jwt) {
-        String msspId = jwt.getClaimAsString("tenantId");
+        String msspId = jwt.getClaimAsString("msspId");
+        if (msspId == null || msspId.isBlank()) {
+            msspId = jwt.getClaimAsString("tenantId");
+        }
+        if (msspId == null || msspId.isBlank()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Missing msspId claim in access token");
+        }
         return ResponseEntity.ok(ApiResponse.success(tenantService.getMyTenants(msspId), "Fetched my tenants"));
     }
 
