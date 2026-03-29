@@ -1,0 +1,16 @@
+.git
+.gitignore
+.idea
+.vscode
+*.iml
+**/target/
+**/node_modules/
+**/dist/
+frontend/node_modules/
+backend/leadbridge-*/target/
+mvnw
+mvnw.cmd
+.mvn/
+README.md
+RUN_GUIDE.md
+infrastructure/keycloak/realm-export.json

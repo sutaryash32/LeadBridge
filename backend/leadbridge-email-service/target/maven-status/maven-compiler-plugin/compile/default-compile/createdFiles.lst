@@ -1,0 +1,6 @@
+com\leadbridge\email\config\SecurityConfig.class
+com\leadbridge\email\service\EmailService.class
+com\leadbridge\email\dto\BulkEmailRequestDto.class
+com\leadbridge\email\EmailApplication.class
+com\leadbridge\email\controller\EmailController.class
+com\leadbridge\email\dto\EmailRequestDto.class

@@ -1,0 +1,13 @@
+com\leadbridge\tenant\service\KeycloakAdminService.class
+com\leadbridge\tenant\mapper\TenantMapper.class
+com\leadbridge\tenant\dto\TenantRequestDto.class
+com\leadbridge\tenant\config\KeycloakConfig.class
+com\leadbridge\tenant\entity\Tenant.class
+com\leadbridge\tenant\controller\TenantController.class
+com\leadbridge\tenant\repository\TenantRepository.class
+com\leadbridge\tenant\mapper\TenantMapperImpl.class
+com\leadbridge\tenant\dto\TenantResponseDto.class
+com\leadbridge\tenant\entity\Tenant$TenantBuilder.class
+com\leadbridge\tenant\TenantApplication.class
+com\leadbridge\tenant\config\SecurityConfig.class
+com\leadbridge\tenant\service\TenantService.class

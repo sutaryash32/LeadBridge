@@ -1,0 +1,13 @@
+com\leadbridge\report\ReportApplication.class
+com\leadbridge\report\entity\TenantSummary.class
+com\leadbridge\report\entity\LeadSummary.class
+com\leadbridge\report\repository\LeadSummaryRepository.class
+com\leadbridge\report\dto\TenantReportDto$TenantReportDtoBuilder.class
+com\leadbridge\report\client\LeadServiceClient.class
+com\leadbridge\report\client\TenantServiceClient.class
+com\leadbridge\report\config\SecurityConfig.class
+com\leadbridge\report\config\FeignConfig.class
+com\leadbridge\report\controller\ReportController.class
+com\leadbridge\report\dto\TenantReportDto.class
+com\leadbridge\report\repository\TenantSummaryRepository.class
+com\leadbridge\report\service\ReportService.class

@@ -48,9 +48,29 @@ LeadBridge follows a modern **Microservices Architecture**:
 -   **If MSSP**: You land on `/dashboard/zone`. You see statistics filtered by your zone's performance.
 -   **If Tenant**: You land on `/dashboard/area`. You see your specific leads count. You can navigate to **Leads Table** to update a lead from `NEW` to `QUALIFIED`.
 
-### 3. Data Integration
--   When you view a report, the **Report Service** automatically gathers data from the **Lead Service** and matches it with the **Tenant Service** using internal Feign calls.
--   Your authentication token is automatically "passed through" from the frontend to the gateway, and then to all internal microservices.
+### 3. Data Integration & leads.json Flow
+How the initial seed data (`leads.json`) reaches the frontend when a user like `master` logs in:
+
+**1. Seed Phase (Backend Initialization):**
+- When the `lead-service` boots up, it reads `src/main/resources/seeds/leads.json`.
+- This file contains pre-defined mockup data (e.g., 36 leads linked to various tenants like 'Samsung', 'Apollo').
+- The service parses this JSON and automatically inserts the records into the PostgreSQL database.
+
+**2. Frontend Request:**
+- When the `master` user logs into the Angular frontend (`http://localhost:4200`), they receive a JWT token from Keycloak.
+- The Angular app navigates to the Master Dashboard and sends an HTTP GET request to `/api/reports/global` or `/api/leads`.
+- The frontend's `JwtInterceptor` automatically attaches the Keycloak token (`Bearer <token>`) to the request headers.
+
+**3. Gateway Routing & Auth Validation:**
+- The request hits the `leadbridge-gateway` (Port 8080).
+- The gateway validates the token's signature against the Keycloak `issuer-uri` (`http://localhost:8180/realms/leadbridge`).
+- Once validated, the gateway routes the request to the target microservice (e.g., `report-service` or `lead-service`).
+
+**4. Data Retrieval & Response:**
+- The microservice verifies the user's role (e.g., `@PreAuthorize("hasRole('MASTER_MSSP')")`).
+- The service executes a database query to fetch the leads that were originally seeded from `leads.json`.
+- The data is aggregated (e.g., counting 'NEW' vs 'QUALIFIED' leads for the Master Report) and returned as a JSON response through the gateway back to the frontend.
+- The Angular dashboard successfully renders the charts and tables ("Failed to load reports" is resolved once the token issuer matches and the API responds with 200 OK).
 
 ---
 

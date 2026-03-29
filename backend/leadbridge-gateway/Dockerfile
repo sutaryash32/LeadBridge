@@ -1,4 +1,16 @@
-FROM eclipse-temurin:17-jre-alpine
+# Stage 1: Build
+FROM maven:3.8.4-openjdk-17-slim AS build
 WORKDIR /app
-COPY target/*.jar app.jar
+
+# Copy everything from the backend context to satisfy Maven multi-module structure
+COPY . .
+
+# Build only the gateway and common module
+RUN mvn clean package -pl leadbridge-gateway -am -DskipTests
+
+# Stage 2: Run
+FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=build /app/leadbridge-gateway/target/*.jar app.jar
 ENTRYPOINT ["java", "-Duser.timezone=Asia/Kolkata", "-jar", "app.jar"]

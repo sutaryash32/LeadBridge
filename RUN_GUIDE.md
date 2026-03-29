@@ -13,29 +13,19 @@ Follow these steps to set up and run the entire LeadBridge microservices archite
 
 ## Method 1: Dockerized Deployment (Recommended)
 
-This mode runs the **entire** platform (Frontend, Backend, and Infrastructure) using Docker.
+This mode runs the **entire** platform (Frontend, Backend, and Infrastructure) using a single command. **You do not need Java or Maven installed on your computer.**
 
-### 1. Build the Artifacts
-First, compile all microservices and the frontend:
-
-```bash
-# Build all backend services
-cd backend
-./mvnw clean package -DskipTests
-
-# Build the frontend (optional, docker-compose will handle this if you haven't built yet)
-# cd ../frontend && npm install && npm run build
-```
-
-### 2. Launch the Stack
-Navigate to the `infrastructure` directory and start everything:
+### 1. Launch the Stack
+Navigate to the `infrastructure` directory and start everything. Docker will automatically download the necessary tools, compile your code, and start the containers.
 
 ```bash
 cd infrastructure
 docker-compose up --build -d
 ```
 
-### 3. Access the Platform
+*Note: The first build will take a few minutes as it downloads Maven and your project dependencies. Subsequent builds will be much faster.*
+
+### 2. Access the Platform
 -   **Frontend**: `http://localhost:4200`
 -   **Discovery Server**: `http://localhost:8761`
 -   **Keycloak Admin**: `http://localhost:8180/admin` (User: `admin` / Password: `admin`)
