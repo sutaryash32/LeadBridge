@@ -38,5 +38,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/unauthorized.component').then(m => m.UnauthorizedComponent)
   },
+  {
+    path: 'reports',
+    loadComponent: () =>
+      import('./features/reports/dashboard.component').then(m => m.ReportsDashboardComponent),
+    canActivate: [RoleGuard],
+    data: { roles: [] }
+  },
   { path: '**', redirectTo: 'redirect' }
 ];

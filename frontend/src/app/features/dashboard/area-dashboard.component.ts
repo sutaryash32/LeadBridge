@@ -12,6 +12,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { LeadService, Lead } from '../../core/services/lead.service';
 import { ReportService, TenantReport } from '../../core/services/report.service';
 import { AuthService } from '../../core/services/auth.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-area-dashboard',
@@ -154,16 +156,21 @@ export class AreaDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.leadService.getLeads().subscribe({
-      next: res => {
-        this.leads = res.data.content;
-        this.loading = false;
-      },
-      error: () => { this.error = 'Failed to load leads'; this.loading = false; }
-    });
-    this.reportService.getMyReport().subscribe({
-      next: res => this.report = res.data,
-      error: () => {}
+    forkJoin({
+      leads:  this.leadService.getLeads().pipe(catchError(() => of(null))),
+      report: this.reportService.getMyReport().pipe(catchError(() => of(null)))
+    }).subscribe(({ leads, report }) => {
+      if (!leads) {
+        this.error = 'Failed to load leads';
+      } else {
+        this.leads = leads.data.content;
+      }
+      if (!report) {
+        this.error = (this.error ? this.error + '; ' : '') + 'Failed to load report stats';
+      } else {
+        this.report = report.data;
+      }
+      this.loading = false;
     });
   }
 

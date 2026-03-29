@@ -5,7 +5,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReportService, TenantReport } from '../../core/services/report.service';
-import { TenantService, Tenant } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
