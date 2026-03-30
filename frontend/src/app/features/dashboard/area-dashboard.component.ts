@@ -1,15 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
-import { MatChipsModule } from '@angular/material/chips';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LeadService, Lead } from '../../core/services/lead.service';
 import { ReportService, TenantReport } from '../../core/services/report.service';
@@ -19,11 +10,7 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-area-dashboard',
   standalone: true,
-  imports: [
-    CommonModule, MatCardModule, MatTableModule, MatButtonModule,
-    MatIconModule, MatProgressSpinnerModule, MatSelectModule,
-    MatInputModule, MatFormFieldModule, FormsModule, MatChipsModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './area-dashboard.component.html',
   styleUrls: ['./area-dashboard.component.css'],
 })
@@ -34,15 +21,17 @@ export class AreaDashboardComponent implements OnInit {
   error = '';
   showAddForm = false;
   newLead: Partial<Lead> = {};
-  columns = ['name', 'email', 'phone', 'status', 'notes', 'actions'];
   statuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'CONVERTED', 'LOST'];
 
-  statusColor(status: string): string {
+  getStatusClass(status: string): string {
     const map: Record<string, string> = {
-      NEW: '#e0e0e0', CONTACTED: '#bbdefb', QUALIFIED: '#fff9c4',
-      CONVERTED: '#c8e6c9', LOST: '#ffcdd2'
+      NEW: 'new',
+      CONTACTED: 'contacted',
+      QUALIFIED: 'qualified',
+      CONVERTED: 'converted',
+      LOST: 'lost'
     };
-    return map[status] || '#e0e0e0';
+    return map[status] || 'new';
   }
 
   constructor(

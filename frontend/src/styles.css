@@ -1,5 +1,20 @@
-/* You can add global styles to this file, and also import other style files */
-body {
+@import './styles/design-system.css';
+
+/* Global overrides */
+html, body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-display);
 }
+
+/* Reset default styles */
+* {
+  box-sizing: border-box;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+

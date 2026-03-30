@@ -26,8 +26,8 @@ public class JwtTenantFilter extends OncePerRequestFilter {
         if (authentication instanceof JwtAuthenticationToken) {
             JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
             String role = extractPrimaryRole(jwtToken.getToken().getClaim("realm_access"));
-            String tenantId = jwtToken.getToken().getClaimAsString("tenantId");
-            String msspId = jwtToken.getToken().getClaimAsString("msspId");
+            String tenantId = extractClaimAsString(jwtToken.getToken(), "tenantId");
+            String msspId = extractClaimAsString(jwtToken.getToken(), "msspId");
 
             // Compatibility fallback: older tokens used tenantId for MSSP zone identifier.
             if ((msspId == null || msspId.isBlank()) && "MSSP".equals(role)) {
@@ -44,6 +44,14 @@ public class JwtTenantFilter extends OncePerRequestFilter {
         }
     }
 
+    private String extractClaimAsString(org.springframework.security.oauth2.jwt.Jwt jwt, String claimName) {
+        Object claim = jwt.getClaim(claimName);
+        if (claim == null) return null;
+        if (claim instanceof String) return (String) claim;
+        if (claim instanceof List<?> list && !list.isEmpty()) return String.valueOf(list.get(0));
+        return claim.toString();
+    }
+
     @SuppressWarnings("unchecked")
     private String extractPrimaryRole(Object realmAccessClaim) {
         if (!(realmAccessClaim instanceof Map<?, ?> realmAccessRaw)) {
@@ -56,7 +64,11 @@ public class JwtTenantFilter extends OncePerRequestFilter {
             return null;
         }
 
-        Object firstRole = roles.get(0);
-        return firstRole instanceof String ? (String) firstRole : null;
+        return roles.stream()
+                .filter(r -> r instanceof String)
+                .map(r -> (String) r)
+                .filter(r -> r.equals("MASTER_MSSP") || r.equals("MSSP") || r.equals("ENTERPRISE_TENANT"))
+                .findFirst()
+                .orElse(null);
     }
 }

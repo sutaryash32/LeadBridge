@@ -84,7 +84,7 @@ services:
     container_name: tenant-service
     environment:
       KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
-      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,7 +102,7 @@ services:
     container_name: lead-service
     environment:
       KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
-      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy
@@ -127,9 +127,11 @@ services:
       context: ../backend
       dockerfile: leadbridge-report-service/Dockerfile
     container_name: report-service
+    ports:
+      - "8083:8083"
     environment:
       KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/leadbridge
-      KEYCLOAK_JWK_SET_URI: http://localhost:8180/realms/leadbridge/protocol/openid-connect/certs
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/leadbridge/protocol/openid-connect/certs
     depends_on:
       postgres:
         condition: service_healthy

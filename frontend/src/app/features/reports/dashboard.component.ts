@@ -69,9 +69,9 @@ export class ReportsDashboardComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.error = 'Failed to load report data. Please refresh and try again.';
+          this.error = `Failed to load report data. HTTP Status: ${err.status} - ${err.message}`;
           this.loading = false;
-          console.error('Report/leads load error:', err);
+          console.error('Report/leads load error. Full details:', err);
         }
       });
     } else {
@@ -81,7 +81,11 @@ export class ReportsDashboardComponent implements OnInit {
 
       reportCall.subscribe({
         next: res => { this.reports = res.data; this.loading = false; },
-        error: () => { this.error = 'Failed to load report data'; this.loading = false; }
+        error: (err) => { 
+          this.error = `Failed to load report data. HTTP Status: ${err.status} - ${err.message}`; 
+          this.loading = false; 
+          console.error('Reports load error:', err);
+        }
       });
     }
   }

@@ -1,75 +1,132 @@
-<div class="zone-dashboard">
-      <div class="hero-shell">
-        <div class="hero-header">
-          <div>
-            <h2>Zone Dashboard</h2>
-            <p>Monitor area performance and zone-wide conversion health.</p>
-          </div>
-          <button mat-stroked-button (click)="authService.logout()">Logout</button>
-        </div>
+<div class="zone-dashboard page-container">
+  <div class="page-content">
+    <!-- Header -->
+    <div class="section-header mb-24" style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h1 style="margin: 0; font-size: 28px; font-weight: 600;">Zone Dashboard</h1>
+        <p class="text-secondary mt-8" style="margin: 0;">Monitor area performance and zone-wide conversion health.</p>
       </div>
-
-      <div *ngIf="loading" class="loading-block">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-
-      <div *ngIf="error" class="error-banner">{{ error }}</div>
-
-      <ng-container *ngIf="!loading && !error">
-
-        <div class="stats-grid">
-          <mat-card class="metric-card">
-            <mat-card-content>
-              <div class="metric-value">{{ totalLeads }}</div>
-              <div class="metric-label">Leads in zone</div>
-            </mat-card-content>
-          </mat-card>
-          <mat-card class="metric-card">
-            <mat-card-content>
-              <div class="metric-value">{{ reports.length }}</div>
-              <div class="metric-label">Areas</div>
-            </mat-card-content>
-          </mat-card>
-          <mat-card class="metric-card">
-            <mat-card-content>
-              <div class="metric-value">{{ avgConversionRate }}%</div>
-              <div class="metric-label">Zone conversion</div>
-            </mat-card-content>
-          </mat-card>
-        </div>
-
-        <mat-card class="main-panel">
-          <mat-card-header>
-            <mat-card-title>My areas</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <p *ngIf="reports.length === 0" class="empty-state">No areas found for this zone.</p>
-            <table mat-table [dataSource]="reports" style="width:100%;" *ngIf="reports.length > 0">
-              <ng-container matColumnDef="areaName">
-                <th mat-header-cell *matHeaderCellDef>Area</th>
-                <td mat-cell *matCellDef="let r">{{ r.areaName }}</td>
-              </ng-container>
-              <ng-container matColumnDef="totalLeads">
-                <th mat-header-cell *matHeaderCellDef>Total leads</th>
-                <td mat-cell *matCellDef="let r">{{ r.totalLeads }}</td>
-              </ng-container>
-              <ng-container matColumnDef="new">
-                <th mat-header-cell *matHeaderCellDef>New</th>
-                <td mat-cell *matCellDef="let r">{{ r.byStatus['NEW'] || 0 }}</td>
-              </ng-container>
-              <ng-container matColumnDef="converted">
-                <th mat-header-cell *matHeaderCellDef>Converted</th>
-                <td mat-cell *matCellDef="let r">{{ r.byStatus['CONVERTED'] || 0 }}</td>
-              </ng-container>
-              <ng-container matColumnDef="conversionRate">
-                <th mat-header-cell *matHeaderCellDef>Conversion rate</th>
-                <td mat-cell *matCellDef="let r">{{ r.conversionRate }}%</td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="columns"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns;"></tr>
-            </table>
-          </mat-card-content>
-        </mat-card>
-
-      </ng-container>
+      <button class="btn btn-secondary" (click)="authService.logout()">Logout</button>
     </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="empty-state" style="min-height: 400px;">
+      <div style="width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+      <p class="text-secondary">Loading your dashboard...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="error-banner">
+      <div style="padding: 16px; background: #F8717110; border: 1px solid #F87171; border-radius: 6px; color: #F87171;">
+        {{ error }}
+      </div>
+    </div>
+
+    <!-- Content -->
+    <ng-container *ngIf="!loading && !error">
+
+      <!-- Metric Cards -->
+      <div class="grid-cols-3 mb-24">
+        <div class="metric-card">
+          <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <div class="metric-value">{{ totalLeads }}</div>
+          <div class="metric-label">Leads in Zone</div>
+        </div>
+
+        <div class="metric-card">
+          <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <div class="metric-value">{{ reports.length }}</div>
+          <div class="metric-label">Areas</div>
+        </div>
+
+        <div class="metric-card">
+          <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8 10 1 17"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          <div class="metric-value">{{ avgConversionRate }}%</div>
+          <div class="metric-label">Zone Conversion</div>
+        </div>
+      </div>
+
+      <!-- Areas Table Section -->
+      <div class="card">
+        <div class="section-title">
+          <div>
+            <h2 style="margin: 0; font-size: 18px;">My Areas</h2>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="reports.length === 0" class="empty-state" style="min-height: 300px;">
+          <svg style="width: 48px; height: 48px;" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V7a2 2 0 012-2h6a2 2 0 012 2v2M7 7a2 2 0 012-2h6a2 2 0 012 2"></path>
+          </svg>
+          <h3 class="empty-state-title">No areas yet</h3>
+          <p class="empty-state-description">No areas have been assigned to this zone.</p>
+        </div>
+
+        <!-- Data Table -->
+        <div *ngIf="reports.length > 0" class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th align="right">Total Leads</th>
+                <th align="right">New</th>
+                <th align="right">Converted</th>
+                <th align="right">Conversion Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let report of reports">
+                <td class="col-name">
+                  <span class="font-medium">{{ report.areaName }}</span>
+                </td>
+                <td align="right" class="font-medium">{{ report.totalLeads }}</td>
+                <td align="right">{{ report.byStatus['NEW'] || 0 }}</td>
+                <td align="right">
+                  <span class="status-badge converted">{{ report.byStatus['CONVERTED'] || 0 }}</span>
+                </td>
+                <td align="right">
+                  <div class="progress-bar">
+                    <div class="progress-bar-track">
+                      <div class="progress-bar-fill" [style.width.%]="report.conversionRate"></div>
+                    </div>
+                    <div class="progress-bar-text">{{ report.conversionRate }}%</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+  </div>
+</div>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .zone-dashboard {
+    background: var(--bg-base);
+  }
+
+  .section-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  .error-banner {
+    margin-bottom: 24px;
+  }
+</style>

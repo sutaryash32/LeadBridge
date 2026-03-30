@@ -53,9 +53,20 @@ export class AuthStateService {
   }
 
   private resolveRole(): AppRole {
+    // 1. Try Keycloak-Angular's built-in check
     if (this.keycloak.isUserInRole('MASTER_MSSP')) return 'MASTER_MSSP';
     if (this.keycloak.isUserInRole('MSSP')) return 'MSSP';
     if (this.keycloak.isUserInRole('ENTERPRISE_TENANT')) return 'ENTERPRISE_TENANT';
+
+    // 2. Fallback: Check raw token directly just in case realm_access isn't mapped properly by the library
+    const tokenParsed = this.keycloak.getKeycloakInstance().tokenParsed as any;
+    const realmRoles = tokenParsed?.realm_access?.roles || [];
+    
+    if (realmRoles.includes('MASTER_MSSP')) return 'MASTER_MSSP';
+    if (realmRoles.includes('MSSP')) return 'MSSP';
+    if (realmRoles.includes('ENTERPRISE_TENANT')) return 'ENTERPRISE_TENANT';
+
+    console.warn('[AuthStateService] No valid role found in token. Token dump:', tokenParsed);
     return 'UNKNOWN';
   }
 }

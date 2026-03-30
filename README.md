@@ -95,6 +95,14 @@ How the initial seed data (`leads.json`) reaches the frontend when a user like `
 - **Error**: `The server time zone value '...' is unrecognized.`
 - **Fix**: Ensure `TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));` is present in the `main` method of all Spring Boot applications.
 
+### 5. "401 Unauthorized" or "Failed to load dashboard data" (Tenant ID Parsing)
+- **Cause**: The application was failing to load dashboard reports and leads because Keycloak was passing `tenantId` and `msspId` as JSON arrays inside the JWT (e.g., `["tenant-123"]`), but Spring Security was strictly attempting to read them as primitive strings (`getClaimAsString()`), resulting in `null` values and rejecting the request.
+- **Fix**: Implemented a custom JWT claim extractor method in `JwtTenantFilter` and `ReportController` to safely unwrap list-based token claims. After this fix, the Master, Zone, and Area dashboards successfully load all data (Reports, Tenants, and global "All Leads").
+
+### 6. UI Missing Data / Framework Constraints
+- **Cause**: Stale UI layouts relying tightly on Angular Material structural components restricted how reports and tables were rendered.
+- **Fix**: Transitioned the frontend to a custom "Enterprise Light-Mode" CSS Design System. The Master Dashboard was fully refactored to fetch and explicitly display systemic leads natively using the `LeadService`, restoring visibility to all leads effectively.
+
 ---
 
 ## 🛠️ How to Add a New Test User

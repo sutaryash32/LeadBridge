@@ -25,7 +25,7 @@ public class ReportController {
     @PreAuthorize("hasRole('ENTERPRISE_TENANT')")
     public ResponseEntity<ApiResponse<TenantReportDto>> getMyReport(
             @AuthenticationPrincipal Jwt jwt) {
-        String tenantId = jwt.getClaimAsString("tenantId");
+        String tenantId = extractClaimAsString(jwt, "tenantId");
             if (tenantId == null || tenantId.isBlank()) {
                 throw new ResponseStatusException(UNAUTHORIZED, "Missing tenantId claim in access token");
             }
@@ -37,10 +37,10 @@ public class ReportController {
     @PreAuthorize("hasRole('MSSP')")
     public ResponseEntity<ApiResponse<List<TenantReportDto>>> getMsspReport(
             @AuthenticationPrincipal Jwt jwt) {
-        String msspId = jwt.getClaimAsString("msspId");
+        String msspId = extractClaimAsString(jwt, "msspId");
         if (msspId == null || msspId.isBlank()) {
             // Compatibility fallback for earlier token shape.
-            msspId = jwt.getClaimAsString("tenantId");
+            msspId = extractClaimAsString(jwt, "tenantId");
         }
         if (msspId == null || msspId.isBlank()) {
             throw new ResponseStatusException(UNAUTHORIZED, "Missing msspId claim in access token");
@@ -54,5 +54,13 @@ public class ReportController {
     public ResponseEntity<ApiResponse<List<TenantReportDto>>> getGlobalReport() {
         return ResponseEntity.ok(ApiResponse.success(
                 reportService.getGlobalReport(), "Fetched global report"));
+    }
+
+    private String extractClaimAsString(Jwt jwt, String claimName) {
+        Object claim = jwt.getClaim(claimName);
+        if (claim == null) return null;
+        if (claim instanceof String) return (String) claim;
+        if (claim instanceof java.util.List<?> list && !list.isEmpty()) return String.valueOf(list.get(0));
+        return claim.toString();
     }
 }

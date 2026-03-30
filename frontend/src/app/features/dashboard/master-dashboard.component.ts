@@ -1,33 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { ReportService, TenantReport } from '../../core/services/report.service';
 import { TenantService, Tenant } from '../../core/services/tenant.service';
-import { LeadService, Lead } from '../../core/services/lead.service';
 import { AuthService } from '../../core/services/auth.service';
-import { forkJoin } from 'rxjs';
+import { LeadService, Lead } from '../../core/services/lead.service';
 
 @Component({
   selector: 'app-master-dashboard',
   standalone: true,
-  imports: [
-    CommonModule, MatCardModule, MatTableModule, MatButtonModule,
-    MatProgressSpinnerModule, MatIconModule, MatInputModule, MatSelectModule, FormsModule
-  ],
+  imports: [CommonModule, FormsModule],
   templateUrl: './master-dashboard.component.html',
   styleUrls: ['./master-dashboard.component.css']
 })
 export class MasterDashboardComponent implements OnInit {
   reports: TenantReport[] = [];
   tenants: Tenant[] = [];
-  allLeads: Lead[] = [];
+  leads: Lead[] = [];
   
   loading = true;
   error = '';
@@ -35,6 +24,15 @@ export class MasterDashboardComponent implements OnInit {
   newTenant: Partial<Tenant> = {};
 
   expandedAreas: Record<string, boolean> = {};
+
+  getTenantRoleClass(role: string): string {
+    const map: Record<string, string> = {
+      MSSP: 'mssp',
+      ENTERPRISE_TENANT: 'enterprise-tenant',
+      MASTER_MSSP: 'master-mssp'
+    };
+    return map[role] || 'new';
+  }
 
   get totalLeads(): number {
     return this.reports.reduce((sum, r) => sum + r.totalLeads, 0);
@@ -79,31 +77,30 @@ export class MasterDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    forkJoin({
-      reports: this.reportService.getGlobalReport(),
-      tenants: this.tenantService.getAllTenants(),
-      leads: this.leadService.getLeads()
-    }).subscribe({
-      next: ({ reports, tenants, leads }) => {
-        this.reports = reports.data;
-        this.tenants = tenants.data;
-        this.allLeads = leads.data.content || [];
+    this.reportService.getGlobalReport().subscribe({
+      next: res => {
+        this.reports = res.data;
         this.loading = false;
       },
-      error: err => {
+      error: () => {
         this.error = 'Failed to load master dashboard data';
         this.loading = false;
-        console.error(err);
       }
+    });
+
+    this.tenantService.getAllTenants().subscribe({
+      next: res => this.tenants = res.data,
+      error: () => {}
+    });
+
+    this.leadService.getLeads().subscribe({
+      next: res => this.leads = res.data.content,
+      error: () => {}
     });
   }
 
   toggleArea(areaName: string): void {
     this.expandedAreas[areaName] = !this.expandedAreas[areaName];
-  }
-
-  getLeadsForArea(tenantId: string): Lead[] {
-    return this.allLeads.filter(lead => lead.tenantId === tenantId);
   }
 
   createTenant(): void {
@@ -124,6 +121,12 @@ export class MasterDashboardComponent implements OnInit {
         error: () => { this.error = 'Failed to delete tenant'; }
       });
     }
+  }
+
+  editTenant(tenant: Partial<Tenant>): void {
+    // Placeholder for edit functionality
+    console.log('Editing tenant:', tenant);
+    // Can be extended with a modal/form later
   }
 }
 

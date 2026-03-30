@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.*;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,8 +27,9 @@ public class ReportService {
     public TenantReportDto getTenantReport(String tenantId) {
         log.info("Generating API-based report for tenant: {}", tenantId);
 
-        TenantResponseDto tenant = tenantServiceClient.getTenantById(java.util.UUID.fromString(tenantId)).getData();
-        Map<LeadStatus, Long> byStatus = leadServiceClient.getLeadStats(tenantId).getData();
+        TenantResponseDto tenant = tenantServiceClient.getTenantById(UUID.fromString(tenantId)).getData();
+        String areaName = tenant.getArea();
+        Map<LeadStatus, Long> byStatus = getLeadStats(tenantId);
 
         long totalCount = byStatus.values().stream().mapToLong(Long::longValue).sum();
         long converted = byStatus.getOrDefault(LeadStatus.CONVERTED, 0L);
@@ -37,7 +40,7 @@ public class ReportService {
 
         return TenantReportDto.builder()
                 .tenantId(tenantId)
-                .areaName(tenant.getArea())
+                .areaName(areaName)
                 .totalLeads(totalCount)
                 .byStatus(byStatus)
                 .conversionRate(conversionRate)
@@ -46,10 +49,13 @@ public class ReportService {
 
     public List<TenantReportDto> getMsspReport(String msspId) {
         log.info("Generating API-based report for MSSP via Feign: {}", msspId);
+        
+        // Fetch all tenants that belong to this MSSP
+        List<TenantResponseDto> tenants = tenantServiceClient.getMyTenants().getData().stream()
+                .filter(t -> TenantRole.ENTERPRISE_TENANT == t.getTenantRole())
+                .collect(Collectors.toList());
 
-        return tenantServiceClient.getMyTenants().getData()
-                .stream()
-                .filter(t -> t.getTenantRole() == TenantRole.ENTERPRISE_TENANT)
+        return tenants.stream()
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());
     }
@@ -57,10 +63,17 @@ public class ReportService {
     public List<TenantReportDto> getGlobalReport() {
         log.info("Generating global API-based report via Feign");
 
-        return tenantServiceClient.getAllTenants().getData()
-                .stream()
-                .filter(t -> t.getTenantRole() == TenantRole.ENTERPRISE_TENANT)
+        List<TenantResponseDto> tenants = tenantServiceClient.getAllTenants().getData().stream()
+                .filter(t -> TenantRole.ENTERPRISE_TENANT == t.getTenantRole())
+                .collect(Collectors.toList());
+
+        return tenants.stream()
                 .map(t -> getTenantReport(t.getId().toString()))
                 .collect(Collectors.toList());
     }
+
+    private Map<LeadStatus, Long> getLeadStats(String tenantId) {
+        return leadServiceClient.getLeadStats(tenantId).getData();
+    }
 }
+
